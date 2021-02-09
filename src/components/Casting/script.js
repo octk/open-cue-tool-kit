@@ -1,3 +1,5 @@
+import { mapGetters } from "vuex";
+
 import {
   IonButtons,
   IonContent,
@@ -17,5 +19,8 @@ export default {
     IonPage,
     IonTitle,
     IonToolbar
+  },
+  computed: {
+    ...mapGetters({ playName: "PLAY_NAME" })
   }
 };

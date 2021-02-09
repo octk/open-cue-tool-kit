@@ -1,20 +1,17 @@
 <template>
   <IonApp>
-    <ion-loading message="Please wait..." :duration="1000" />
     <casting />
   </IonApp>
 </template>
 
 <script lang="ts">
 import Casting from './components/Casting/index.vue' 
-import { IonLoading, IonApp } from '@ionic/vue';
-import { defineComponent, ref } from 'vue';
-import { archiveOutline, archiveSharp, bookmarkOutline, bookmarkSharp, heartOutline, heartSharp, mailOutline, mailSharp, paperPlaneOutline, paperPlaneSharp, trashOutline, trashSharp, warningOutline, warningSharp } from 'ionicons/icons';
+import {  IonApp } from '@ionic/vue';
+import { defineComponent } from 'vue';
 
 export default defineComponent({
   name: 'App',
   components: {
-    IonLoading, 
     IonApp, 
     Casting
   },
