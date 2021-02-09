@@ -3,22 +3,20 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 50%;
+  top: 40%;
   transform: translateY(-50%);
 }
 
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
+#linkWrapper {
+  width: 40%;
+  margin: auto;
+  padding: 2em;
+  text-align: center;
 }
 
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-  color: #8c8c8c;
-  margin: 0;
-}
-
-#container a {
-  text-decoration: none;
+#linkInput {
+  background-color: white;
+  color: black;
+  font-size: 16pt;
+  padding: 0.5em !important;
 }
