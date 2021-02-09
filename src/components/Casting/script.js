@@ -7,9 +7,7 @@ import {
   IonMenuButton,
   IonPage,
   IonTitle,
-  IonToolbar,
-  IonInput,
-  IonLoading
+  IonToolbar
 } from "@ionic/vue";
 export default {
   name: "Casting",
@@ -20,15 +18,9 @@ export default {
     IonMenuButton,
     IonPage,
     IonTitle,
-    IonToolbar,
-    IonInput,
-    IonLoading
+    IonToolbar
   },
   computed: {
-    ...mapGetters({
-      playName: "PLAY_NAME",
-      invitationLink: "INVITATION_LINK",
-      cast: "CAST"
-    })
+    ...mapGetters({ playName: "PLAY_NAME" })
   }
 };
