@@ -11,13 +11,28 @@
   <ion-content :fullscreen="true">
     <ion-header collapse="condense">
       <ion-toolbar>
-        <ion-title size="large">Casting</ion-title>
+        <ion-title size="large">Casting {{playName}} </ion-title>
       </ion-toolbar>
     </ion-header>
 
     <div id="container">
-      <strong class="capitalize">Casting</strong>
-      {{playName}}
+      <div id="linkWrapper">
+        <ion-input readonly="true" id="linkInput">
+          {{invitationLink}}
+        </ion-input>
+      </div>
+      Share this link with your cast <br />
+      <div style="padding-top: 4em;">
+        <div v-if="!cast.length">
+          They will appear when they accept your invitation
+        </div>
+        <div v-for="member in cast">
+          {{member.name}} playing {{member.role}}
+        </div>
+      </div>
+      <div v-if="cast.length" style="padding-top: 4em;">
+        <ion-button> Begin show </ion-button>
+      </div>
     </div>
   </ion-content>
 </ion-page>
