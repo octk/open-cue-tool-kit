@@ -1,0 +1,25 @@
+<ion-page>
+  <ion-header :translucent="true">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button color="primary"></ion-menu-button>
+      </ion-buttons>
+      <ion-title> Accept invitation? </ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content :fullscreen="true">
+    <ion-header collapse="condense">
+      <ion-toolbar>
+        <ion-title size="large"> Accept invitation? </ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <div id="invitationWrapper">
+      {{invitor}} is inviting you to perform in {{playName}}
+    </div>
+  </ion-content>
+  <div>
+    <ion-button style="width: 100%;"> Accept </ion-button>
+  </div>
+</ion-page>

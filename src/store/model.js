@@ -1,6 +1,8 @@
 export default {
   state: {
+    aspiration: "accepting",
     playName: "Macbeth",
+    invitor: "Tessa",
     invitationLink: "cuecannon.com/asdf",
     cast: [
       { name: "Drew", roles: ["First Witch", "Macbeth"] },
@@ -27,6 +29,17 @@ export default {
     },
     CAST(state) {
       return state.cast;
+    },
+    ASPIRATION(state) {
+      return state.aspiration;
+    },
+    INVITOR(state) {
+      return state.invitor;
+    }
+  },
+  mutations: {
+    SET_ASPIRATION(state, value) {
+      state.aspiration = value;
     }
   }
 };

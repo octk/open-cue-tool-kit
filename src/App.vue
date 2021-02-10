@@ -1,20 +1,29 @@
 <template>
   <IonApp>
-    <casting />
+    <casting v-if="aspiration === 'casting'"/>
+    <accepting v-if="aspiration === 'accepting'"/> 
   </IonApp>
 </template>
 
 <script lang="ts">
-import Casting from './components/Casting/index.vue' 
-import {  IonApp } from '@ionic/vue';
+import { IonApp } from '@ionic/vue';
 import { defineComponent } from 'vue';
+import {mapGetters} from 'vuex';
+
+import Casting from './components/Casting/index.vue' 
+import Accepting from './components/Accepting/index.vue' 
+
 
 export default defineComponent({
   name: 'App',
   components: {
     IonApp, 
-    Casting
+    Casting,
+    Accepting 
   },
+  computed: {
+    ...mapGetters({aspiration: "ASPIRATION" })
+  }
 });
 </script>
 
