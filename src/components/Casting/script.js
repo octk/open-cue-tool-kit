@@ -1,4 +1,5 @@
 import { mapGetters } from "vuex";
+import QRCode from "qrcode";
 
 import {
   IonButtons,
@@ -9,7 +10,11 @@ import {
   IonTitle,
   IonToolbar,
   IonInput,
-  IonLoading
+  IonLoading,
+  IonList,
+  IonItem,
+  IonItemOptions,
+  IonItemOption
 } from "@ionic/vue";
 export default {
   name: "Casting",
@@ -22,7 +27,11 @@ export default {
     IonTitle,
     IonToolbar,
     IonInput,
-    IonLoading
+    IonLoading,
+    IonList,
+    IonItem,
+    IonItemOptions,
+    IonItemOption
   },
   computed: {
     ...mapGetters({
@@ -30,5 +39,16 @@ export default {
       invitationLink: "INVITATION_LINK",
       cast: "CAST"
     })
+  },
+  mounted() {
+    const canvas = document.getElementById("qrCanvas");
+    QRCode.toCanvas(canvas, this.invitationLink, function(error) {
+      if (error) console.error(error);
+    });
+  },
+  methods: {
+    copyInvitationLink() {
+      navigator.clipboard.writeText(this.invitationLink);
+    }
   }
 };

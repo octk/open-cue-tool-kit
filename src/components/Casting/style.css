@@ -1,22 +1,4 @@
-#container {
+#invitationWrapper {
   text-align: center;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 40%;
-  transform: translateY(-50%);
-}
-
-#linkWrapper {
-  width: 40%;
-  margin: auto;
-  padding: 2em;
-  text-align: center;
-}
-
-#linkInput {
-  background-color: white;
-  color: black;
-  font-size: 16pt;
-  padding: 0.5em !important;
+  padding-top: 2em;
 }

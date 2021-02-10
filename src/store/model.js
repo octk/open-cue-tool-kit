@@ -3,9 +3,19 @@ export default {
     playName: "Macbeth",
     invitationLink: "cuecannon.com/asdf",
     cast: [
-      { name: "Drew", role: "First Witch" },
-      { name: "Shokai", role: "Second Witch" },
-      { name: "Daniel", role: "Third Witch" }
+      { name: "Drew", roles: ["First Witch", "Macbeth"] },
+      {
+        name: "Shokai",
+        roles: [
+          "Second Witch",
+          "Macbeth",
+          "Lady M",
+          "Boatswain",
+          "Prospero",
+          "Jackie Chan"
+        ]
+      },
+      { name: "Daniel", roles: ["Third Witch", "Macbeth"] }
     ]
   },
   getters: {

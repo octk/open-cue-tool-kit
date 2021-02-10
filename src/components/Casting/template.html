@@ -4,7 +4,7 @@
       <ion-buttons slot="start">
         <ion-menu-button color="primary"></ion-menu-button>
       </ion-buttons>
-      <ion-title>Casting </ion-title>
+      <ion-title>Casting {{playName}} </ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -15,24 +15,28 @@
       </ion-toolbar>
     </ion-header>
 
-    <div id="container">
-      <div id="linkWrapper">
-        <ion-input readonly="true" id="linkInput">
-          {{invitationLink}}
-        </ion-input>
+    <div id="invitationWrapper">
+      <div><canvas id="qrCanvas"> </canvas></div>
+      <ion-button @click="copyInvitationLink">
+        Copy invitation link
+      </ion-button>
+    </div>
+
+    <div style="padding: 1em; text-align: center;">
+      <div v-if="!cast.length">
+        Waiting for performers to accept your invitation...
       </div>
-      Share this link with your cast <br />
-      <div style="padding-top: 4em;">
-        <div v-if="!cast.length">
-          They will appear when they accept your invitation
-        </div>
+      <ion-list v-if="cast.length">
         <div v-for="member in cast">
-          {{member.name}} playing {{member.role}}
+          <ion-item v-for="(role, index) in member.roles">
+            <span v-if="index === 0"> {{member.name}} </span>
+            <div slot="end">{{role}}</div>
+          </ion-item>
         </div>
-      </div>
-      <div v-if="cast.length" style="padding-top: 4em;">
-        <ion-button> Begin show </ion-button>
-      </div>
+      </ion-list>
     </div>
   </ion-content>
+  <div v-if="cast.length">
+    <ion-button style="width: 100%;"> Begin show </ion-button>
+  </div>
 </ion-page>
