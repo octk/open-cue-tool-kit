@@ -70,6 +70,14 @@ export default {
         state.productions.push(production);
       };
       state.comms.init();
+    },
+    JOIN_PRODUCTION({ state }, production) {
+      state.aspiration = "cueing";
+      state.comms.joinProduction(production);
+      state.cast.push({
+        name: "Need a name",
+        roles: ["Macfarlan", "Croffard"]
+      });
     }
   }
 };

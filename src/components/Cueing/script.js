@@ -1,4 +1,5 @@
-import { mapGetters, mapActions } from "vuex";
+import { mapActions, mapGetters } from "vuex";
+
 import {
   IonButtons,
   IonContent,
@@ -9,7 +10,7 @@ import {
   IonToolbar
 } from "@ionic/vue";
 export default {
-  name: "Starting",
+  name: "Cueing",
   components: {
     IonButtons,
     IonContent,
@@ -20,16 +21,9 @@ export default {
     IonToolbar
   },
   computed: {
-    ...mapGetters({ productions: "PRODUCTIONS" })
+    ...mapGetters({ cue: "CUE" })
   },
   methods: {
-    ...mapActions({
-      makeProduction: "MAKE_NEW_PRODUCTION",
-      initComms: "INIT_COMMS",
-      joinProduction: "JOIN_PRODUCTION"
-    })
-  },
-  created() {
-    this.initComms();
+    ...mapActions({ cueNextActor: "CUE_NEXT_ACTOR" })
   }
 };
