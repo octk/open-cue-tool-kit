@@ -1,5 +1,6 @@
 <template>
   <IonApp>
+    <browsing v-if="aspiration === 'browsing'" />
     <casting v-if="aspiration === 'casting'"/>
     <accepting v-if="aspiration === 'accepting'"/> 
   </IonApp>
@@ -10,14 +11,15 @@ import { IonApp } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import {mapGetters} from 'vuex';
 
+import Browsing from './components/Browsing/index.vue' 
 import Casting from './components/Casting/index.vue' 
 import Accepting from './components/Accepting/index.vue' 
-
 
 export default defineComponent({
   name: 'App',
   components: {
     IonApp, 
+    Browsing,
     Casting,
     Accepting 
   },

@@ -1,6 +1,11 @@
+import { Comms } from "../comms";
+
+const comms = new Comms();
+comms.init();
+
 export default {
   state: {
-    aspiration: "accepting",
+    aspiration: "browsing",
     playName: "Macbeth",
     invitor: "Tessa",
     invitationLink: "cuecannon.com/asdf",
@@ -18,7 +23,9 @@ export default {
         ]
       },
       { name: "Daniel", roles: ["Third Witch", "Macbeth"] }
-    ]
+    ],
+    plays: [{ title: "Macbeth" }],
+    comms
   },
   getters: {
     PLAY_NAME(state) {
@@ -35,11 +42,22 @@ export default {
     },
     INVITOR(state) {
       return state.invitor;
+    },
+    PLAYS(state) {
+      return state.plays;
     }
   },
   mutations: {
     SET_ASPIRATION(state, value) {
       state.aspiration = value;
+    }
+  },
+  actions: {
+    SELECT_PLAY({ state }, play) {
+      state.playName = play.title;
+      state.aspiration = "casting";
+      state.cast = [];
+      state.invitationLink = state.comms.makeInvite();
     }
   }
 };

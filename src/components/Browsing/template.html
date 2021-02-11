@@ -1,0 +1,26 @@
+<ion-page>
+  <ion-header :translucent="true">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button color="primary"></ion-menu-button>
+      </ion-buttons>
+      <ion-title> Cue Scripts </ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content :fullscreen="true">
+    <ion-header collapse="condense">
+      <ion-toolbar>
+        <ion-title size="large"> Cue Scripts </ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-list>
+      <ion-list-item v-for="play in availablePlays">
+        <div style="padding: 1em;" @click="selectPlay(play)">
+          {{play.title}}
+        </div>
+      </ion-list-item>
+    </ion-list>
+  </ion-content>
+</ion-page>
