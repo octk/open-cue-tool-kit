@@ -1,15 +1,10 @@
 import Libp2p from "libp2p";
 import libP2pConfig from "./libp2pConfig";
 import protocol from "./protocol.js";
-console.log(protocol);
-
-const test = protocol.encode({
-  type: protocol.Type.SEND_MESSAGE
-});
-console.log(test);
 
 class CueScriptProtocol {
   constructor(libP2pNode, handlers) {
+    this.lobbyTopic = this.pubsubFromId("lobby");
     this.libp2p = libP2pNode;
     this.handlers = handlers;
 
@@ -30,44 +25,45 @@ class CueScriptProtocol {
     if (!this.libp2p.isStarted())
       console.error("Oops. Tried to subscribe before lip2p was started.");
     this.libp2p.pubsub.subscribe(
-      "/libp2p/dev/cueCannon/1.0.0",
-      this.updateFromProtocolEvent
+      this.lobbyTopic,
+      this.updateFromProtocolEvent(this)
     );
   }
 
-  updateFromProtocolEvent(message) {
-    const { onNewProduction } = this.handlers;
-    try {
-      const request = Request.decode(message.data);
-      switch (request.type) {
-        case Request.Type.SEND_MESSAGE:
-          onNewProduction(request.newProduction);
-          break;
-        default:
-        //No-op
+  updateFromProtocolEvent(self) {
+    // Closure around this as self to pass handlers
+    return function(message) {
+      const { onNewProduction } = self.handlers;
+      try {
+        const request = protocol.decode(message.data);
+        switch (request.type) {
+          case protocol.Type.NEW_PRODUCTION:
+            console.log(request.newProduction);
+            onNewProduction(request.newProduction);
+            break;
+          default:
+          //No-op
+        }
+      } catch (err) {
+        console.error(err);
       }
-    } catch (err) {
-      console.error(err);
-    }
+    };
   }
 
-  updateFromProduction(message) {
-    try {
-      const request = Request.decode(message.data);
-      switch (request.type) {
-        default:
-        //No-op
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async createNewProduction(/*title*/) {
+  async createNewProduction(title) {
     const id = (~~(Math.random() * 1e9)).toString(36) + Date.now();
-    await this.libp2p.pubsub.publish(this.topic, {
-      type: protocol.Type.SEND_MESSAGE
-    }); // Open casting to everyone
+    console.log(protocol);
+    await this.libp2p.pubsub.publish(
+      this.lobbyTopic,
+      protocol.encode({
+        type: protocol.Type.NEW_PRODUCTION,
+        newProduction: {
+          title,
+          id
+        }
+      })
+    ); // Open casting to everyone
+
     await this.libp2p.pubsub.subscribe(
       this.pubsubFromId(id),
       this.updateFromProduction
