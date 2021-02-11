@@ -20,10 +20,19 @@
     "cordova-plugin-taptic-engine": "^2.2.0",
     "core-js": "^3.6.5",
     "libp2p": "^0.30.7",
+    "libp2p-bootstrap": "^0.12.2",
+    "libp2p-gossipsub": "^0.8.0",
+    "libp2p-kad-dht": "^0.20.6",
+    "libp2p-mplex": "^0.10.2",
+    "libp2p-noise": "^2.0.4",
+    "libp2p-secio": "^0.13.1",
+    "libp2p-webrtc-star": "^0.21.1",
+    "libp2p-websockets": "^0.15.2",
     "qrcode": "^1.4.4",
     "vue": "^3.0.0-0",
     "vue-router": "^4.0.0-0",
-    "vuex": "^4.0.0"
+    "vuex": "^4.0.0",
+    "wrtc": "^0.4.7"
   },
   "devDependencies": {
     "@capacitor/cli": "2.4.6",

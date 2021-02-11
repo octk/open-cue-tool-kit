@@ -1,11 +1,7 @@
-import { Comms } from "../comms";
-
-const comms = new Comms();
-comms.init();
-
+import Comms from "../comms";
 export default {
   state: {
-    aspiration: "browsing",
+    aspiration: "starting",
     playName: "Macbeth",
     invitor: "Tessa",
     invitationLink: "cuecannon.com/asdf",
@@ -25,7 +21,8 @@ export default {
       { name: "Daniel", roles: ["Third Witch", "Macbeth"] }
     ],
     plays: [{ title: "Macbeth" }],
-    comms
+    productions: [],
+    comms: null
   },
   getters: {
     PLAY_NAME(state) {
@@ -45,6 +42,9 @@ export default {
     },
     PLAYS(state) {
       return state.plays;
+    },
+    PRODUCTIONS(state) {
+      return state.productions;
     }
   },
   mutations: {
@@ -57,7 +57,19 @@ export default {
       state.playName = play.title;
       state.aspiration = "casting";
       state.cast = [];
-      state.invitationLink = state.comms.makeInvite();
+
+      const id = state.comms.makeInvite(play.title);
+      state.productions.push({ id, title: play.title });
+    },
+    MAKE_NEW_PRODUCTION({ state }) {
+      state.aspiration = "browsing";
+    },
+    INIT_COMMS({ state }) {
+      state.comms = new Comms();
+      state.comms.onNewProduction = function(production) {
+        state.productions.push(production);
+      };
+      state.comms.init();
     }
   }
 };

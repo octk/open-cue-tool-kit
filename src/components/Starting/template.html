@@ -1,0 +1,32 @@
+<ion-page>
+  <ion-header :translucent="true">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button color="primary"></ion-menu-button>
+      </ion-buttons>
+      <ion-title> Starting </ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content :fullscreen="true">
+    <ion-header collapse="condense">
+      <ion-toolbar>
+        <ion-title size="large"> Starting </ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-button
+      style="width: 100%; margin-bottom: 1em;"
+      @click="makeProduction"
+    >
+      Make new production
+    </ion-button>
+    <ion-button
+      style="width: 100%; margin-bottom: 1em;"
+      v-for="production in productions"
+      @click="joinProduction(production)"
+    >
+      Join {{ production.title }}
+    </ion-button>
+  </ion-content>
+</ion-page>

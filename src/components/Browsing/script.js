@@ -7,14 +7,12 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
-  IonList,
-  IonListItem
+  IonList
 } from "@ionic/vue";
 export default {
   name: "Browsing",
   components: {
     IonList,
-    IonListItem,
     IonContent,
     IonHeader,
     IonMenuButton,
