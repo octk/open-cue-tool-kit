@@ -1,6 +1,12 @@
 import Libp2p from "libp2p";
 import libP2pConfig from "./libp2pConfig";
-import Request from "./protocol";
+import protocol from "./protocol.js";
+console.log(protocol);
+
+const test = protocol.encode({
+  type: protocol.Type.SEND_MESSAGE
+});
+console.log(test);
 
 class CueScriptProtocol {
   constructor(libP2pNode, handlers) {
@@ -57,9 +63,11 @@ class CueScriptProtocol {
     }
   }
 
-  async createNewProduction(title) {
+  async createNewProduction(/*title*/) {
     const id = (~~(Math.random() * 1e9)).toString(36) + Date.now();
-    await this.libp2p.pubsub.publish(this.topic, { title, id }); // Open casting to everyone
+    await this.libp2p.pubsub.publish(this.topic, {
+      type: protocol.Type.SEND_MESSAGE
+    }); // Open casting to everyone
     await this.libp2p.pubsub.subscribe(
       this.pubsubFromId(id),
       this.updateFromProduction
