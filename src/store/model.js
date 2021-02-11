@@ -1,4 +1,4 @@
-import Comms from "../comms";
+import Comms from "../net";
 export default {
   state: {
     aspiration: "starting",
