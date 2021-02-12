@@ -44,7 +44,7 @@ class CueScriptProtocol {
             onAcceptInvite(request.acceptInvite);
             break;
           case protocol.Type.BEGIN_SHOW:
-            onBeginShow(request.actorsByPart);
+            onBeginShow(request.beginShow);
             break;
           default:
           //No-op

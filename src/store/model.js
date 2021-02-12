@@ -54,6 +54,7 @@ export default {
     cast: [],
     casting: null,
     castMembers: [],
+    lineNumber: 0,
 
     // These are for someone joining a production
     cue: ""
@@ -115,18 +116,26 @@ export default {
           roles: parts
         }));
       };
-      state.comms.onBeginShow = function(actorsByPart) {
+      state.comms.onBeginShow = function({ actorsByPart }) {
         state.actorsByPart = actorsByPart;
+        state.lineNumber = 0;
+        const line = midsummerAct3[state.lineNumber];
+        const currentActor = state.actorsByPart[line.s];
+        console.log(line, currentActor, state.identity);
+        if (currentActor === state.identity) {
+          state.cue = line.t;
+        } else {
+          state.cue = "";
+        }
       };
       state.comms.init();
     },
 
-    ACCEPT_INVITE({ state }, production) {
+    async ACCEPT_INVITE({ state }, production) {
       state.aspiration = "cueing";
-      state.identity = state.comms.acceptInvite(production);
+      state.identity = await state.comms.acceptInvite(production);
     },
     BEGIN_SHOW({ state }) {
-      state.lineNumber = 0;
       state.comms.beginShow(state.casting);
     }
   }
