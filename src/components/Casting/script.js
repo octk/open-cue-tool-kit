@@ -1,4 +1,4 @@
-import { mapGetters } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 import QRCode from "qrcode";
 
 import {
@@ -47,6 +47,7 @@ export default {
     });
   },
   methods: {
+    ...mapActions({ beginShow: "BEGIN_SHOW" }),
     copyInvitationLink() {
       navigator.clipboard.writeText(this.invitationLink);
     }
