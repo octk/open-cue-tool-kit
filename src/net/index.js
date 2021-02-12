@@ -33,13 +33,15 @@ class CueScriptProtocol {
   updateFromProtocolEvent(self) {
     // Closure around this as self to pass handlers
     return function(message) {
-      const { onNewProduction } = self.handlers;
+      const { onNewProduction, onAcceptInvite } = self.handlers;
       try {
         const request = protocol.decode(message.data);
         switch (request.type) {
           case protocol.Type.NEW_PRODUCTION:
-            console.log(request.newProduction);
             onNewProduction(request.newProduction);
+            break;
+          case protocol.Type.ACCEPT_INVITE:
+            onAcceptInvite(request.acceptInvite);
             break;
           default:
           //No-op
@@ -52,7 +54,6 @@ class CueScriptProtocol {
 
   async createNewProduction(title) {
     const id = (~~(Math.random() * 1e9)).toString(36) + Date.now();
-    console.log(protocol);
     await this.libp2p.pubsub.publish(
       this.lobbyTopic,
       protocol.encode({
@@ -71,16 +72,26 @@ class CueScriptProtocol {
     return id;
   }
 
-  async joinProduction(id) {
+  async joinProduction(id, userHandle) {
     await this.libp2p.pubsub.subscribe(
       this.pubsubFromId(id),
       this.updateFromProduction
     );
+    await this.libp2p.pubsub.publish(
+      this.pubsubFromId(id),
+      protocol.encode({
+        type: protocol.Type.ACCEPT_INVITE,
+        acceptInvite: {
+          identity: userHandle
+        }
+      })
+    );
   }
 
   // Utils
-  pubsubFromId(id) {
-    return `/libp2p/dev/cueCannon/1.0.0/${id}`;
+  pubsubFromId(/*id*/) {
+    // For now, publish all to one channel FIXME
+    return `/libp2p/dev/cueCannon/1.0.0/lobby`;
   }
 }
 
@@ -88,18 +99,16 @@ export default class Comms {
   async init() {
     // Initialize and set debugging
     this.libP2pNode = await Libp2p.create(libP2pConfig);
-    this.libP2pNode.connectionManager.on("peer:connect", connection => {
-      console.log(`Connected to ${connection.remotePeer.toB58String()}`);
-    });
+    this.userHandle = this.libP2pNode.peerId.toB58String();
     await this.libP2pNode.start();
 
     // Define handlers and begin protocol
-    const { onNewProduction, acceptInvite, nextCue } = this;
+    const { onNewProduction, onAcceptInvite, onNextCue } = this;
 
     this.cueScriptProtocol = new CueScriptProtocol(this.libP2pNode, {
       onNewProduction,
-      acceptInvite,
-      nextCue
+      onAcceptInvite,
+      onNextCue
     });
   }
 
@@ -108,8 +117,8 @@ export default class Comms {
     const id = await this.cueScriptProtocol.createNewProduction(title);
     return id;
   }
-  async acceptInvite(id) {
-    await this.cueScriptProtocol.joinProduction(id);
+  async acceptInvite({ id }) {
+    await this.cueScriptProtocol.joinProduction(id, this.userHandle);
   }
   nextCue() {
     console.log("nextCue not implemented");

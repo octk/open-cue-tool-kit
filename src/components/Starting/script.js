@@ -26,7 +26,7 @@ export default {
     ...mapActions({
       makeProduction: "MAKE_NEW_PRODUCTION",
       initComms: "INIT_COMMS",
-      joinProduction: "JOIN_PRODUCTION"
+      joinProduction: "ACCEPT_INVITE"
     })
   },
   created() {

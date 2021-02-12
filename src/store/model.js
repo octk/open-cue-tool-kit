@@ -1,9 +1,14 @@
 import Comms from "../net";
 export default {
   state: {
+    // These are for everyone
+    comms: null,
+    productions: [],
+    plays: [{ title: "Macbeth" }],
     aspiration: "starting",
+
+    // These are for someone running a production
     playName: "Macbeth",
-    invitor: "Tessa",
     invitationLink: "cuecannon.com/asdf",
     cast: [
       { name: "Drew", roles: ["First Witch", "Macbeth"] },
@@ -20,9 +25,9 @@ export default {
       },
       { name: "Daniel", roles: ["Third Witch", "Macbeth"] }
     ],
-    plays: [{ title: "Macbeth" }],
-    productions: [],
-    comms: null
+
+    // These are for someone joining a production
+    cue: ""
   },
   getters: {
     PLAY_NAME(state) {
@@ -45,6 +50,9 @@ export default {
     },
     PRODUCTIONS(state) {
       return state.productions;
+    },
+    CUE(state) {
+      return state.cue;
     }
   },
   mutations: {
@@ -64,20 +72,21 @@ export default {
     MAKE_NEW_PRODUCTION({ state }) {
       state.aspiration = "browsing";
     },
+
     INIT_COMMS({ state }) {
       state.comms = new Comms();
       state.comms.onNewProduction = function(production) {
         state.productions.push(production);
       };
+      state.comms.onAcceptInvite = function({ identity }) {
+        state.cast.push({ name: identity, roles: ["Macbeth"] });
+      };
       state.comms.init();
     },
-    JOIN_PRODUCTION({ state }, production) {
+
+    ACCEPT_INVITE({ state }, production) {
       state.aspiration = "cueing";
-      state.comms.joinProduction(production);
-      state.cast.push({
-        name: "Need a name",
-        roles: ["Macfarlan", "Croffard"]
-      });
+      state.comms.acceptInvite(production);
     }
   }
 };

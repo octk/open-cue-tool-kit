@@ -38,6 +38,10 @@ export default {
       randomWalk: {
         enabled: true
       }
+    },
+    pubsub: {
+      enabled: true,
+      emitSelf: true
     }
   }
 };
