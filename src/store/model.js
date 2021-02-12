@@ -57,7 +57,8 @@ export default {
     lineNumber: 0,
 
     // These are for someone joining a production
-    cue: ""
+    cue: "",
+    part: ""
   },
   getters: {
     PLAY_NAME(state) {
@@ -83,6 +84,9 @@ export default {
     },
     CUE(state) {
       return state.cue;
+    },
+    PART(state) {
+      return state.part;
     }
   },
   mutations: {
@@ -119,15 +123,25 @@ export default {
       state.comms.onBeginShow = function({ actorsByPart }) {
         state.actorsByPart = actorsByPart;
         state.lineNumber = 0;
+        setCues();
+      };
+
+      state.comms.onCueNextActor = function() {
+        state.lineNumber += 1;
+        setCues();
+      };
+
+      function setCues() {
         const line = midsummerAct3[state.lineNumber];
         const currentActor = state.actorsByPart[line.s];
-        console.log(line, currentActor, state.identity);
         if (currentActor === state.identity) {
+          state.part = line.s;
           state.cue = line.t;
         } else {
           state.cue = "";
         }
-      };
+      }
+
       state.comms.init();
     },
 
@@ -137,6 +151,9 @@ export default {
     },
     BEGIN_SHOW({ state }) {
       state.comms.beginShow(state.casting);
+    },
+    CUE_NEXT_ACTOR({ state }) {
+      state.comms.cueNextActor();
     }
   }
 };

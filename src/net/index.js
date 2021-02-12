@@ -33,7 +33,12 @@ class CueScriptProtocol {
   updateFromProtocolEvent(self) {
     // Closure around this as self to pass handlers
     return function(message) {
-      const { onNewProduction, onAcceptInvite, onBeginShow } = self.handlers;
+      const {
+        onNewProduction,
+        onAcceptInvite,
+        onBeginShow,
+        onCueNextActor
+      } = self.handlers;
       try {
         const request = protocol.decode(message.data);
         switch (request.type) {
@@ -45,6 +50,9 @@ class CueScriptProtocol {
             break;
           case protocol.Type.BEGIN_SHOW:
             onBeginShow(request.beginShow);
+            break;
+          case protocol.Type.CUE_NEXT_ACTOR:
+            onCueNextActor();
             break;
           default:
           //No-op
@@ -101,6 +109,15 @@ class CueScriptProtocol {
     ); // Empty b/c ids broken, fixme is below
   }
 
+  async cueNextActor() {
+    await this.libp2p.pubsub.publish(
+      this.pubsubFromId(),
+      protocol.encode({
+        type: protocol.Type.CUE_NEXT_ACTOR
+      })
+    ); // Empty b/c ids broken, fixme is below
+  }
+
   // Utils
   pubsubFromId(/*id*/) {
     // For now, publish all to one channel FIXME
@@ -116,12 +133,18 @@ export default class Comms {
     await this.libP2pNode.start();
 
     // Define handlers and begin protocol
-    const { onNewProduction, onAcceptInvite, onBeginShow } = this;
+    const {
+      onNewProduction,
+      onAcceptInvite,
+      onBeginShow,
+      onCueNextActor
+    } = this;
 
     this.cueScriptProtocol = new CueScriptProtocol(this.libP2pNode, {
       onNewProduction,
       onAcceptInvite,
-      onBeginShow
+      onBeginShow,
+      onCueNextActor
     });
   }
 
@@ -138,7 +161,8 @@ export default class Comms {
   async beginShow({ actorsByPart }) {
     await this.cueScriptProtocol.beginShow(actorsByPart);
   }
-  nextCue() {
-    console.log("nextCue not implemented");
+
+  async cueNextActor() {
+    await this.cueScriptProtocol.cueNextActor();
   }
 }

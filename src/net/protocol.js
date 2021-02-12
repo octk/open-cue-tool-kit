@@ -6,6 +6,7 @@ message Request {
     NEW_PRODUCTION = 0;
     ACCEPT_INVITE = 1;
     BEGIN_SHOW = 2;
+    CUE_NEXT_ACTOR = 3;
   }
 
   required Type type = 1;
