@@ -44,13 +44,15 @@ export default {
     // These are for everyone
     comms: null,
     productions: [],
-    plays: [{ title: "Macbeth" }],
+    plays: [{ title: "Midsummer Act 3" }],
     aspiration: "starting",
+    actorsByPart: {},
 
     // These are for someone running a production
-    playName: "Macbeth",
+    playName: "Midsummer Act 3",
     invitationLink: "cuecannon.com/asdf",
     cast: [],
+    casting: null,
     castMembers: [],
 
     // These are for someone joining a production
@@ -107,18 +109,25 @@ export default {
       };
       state.comms.onAcceptInvite = function({ identity }) {
         state.castMembers.push(identity);
-        const { partsByActor } = castPlay(midsummerAct3, state.castMembers);
-        state.cast = _.map(partsByActor, (parts, actor) => ({
+        state.casting = castPlay(midsummerAct3, state.castMembers);
+        state.cast = _.map(state.casting.partsByActor, (parts, actor) => ({
           name: actor,
           roles: parts
         }));
+      };
+      state.comms.onBeginShow = function(actorsByPart) {
+        state.actorsByPart = actorsByPart;
       };
       state.comms.init();
     },
 
     ACCEPT_INVITE({ state }, production) {
       state.aspiration = "cueing";
-      state.comms.acceptInvite(production);
+      state.identity = state.comms.acceptInvite(production);
+    },
+    BEGIN_SHOW({ state }) {
+      state.lineNumber = 0;
+      state.comms.beginShow(state.casting);
     }
   }
 };
