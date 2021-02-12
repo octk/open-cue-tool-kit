@@ -39,8 +39,6 @@ function castPlay(lines, actors) {
   return { actorsByPart, partsByActor };
 }
 
-castPlay(midsummerAct3, ["Shokai", "Daniel", "Drew"]);
-
 export default {
   state: {
     // These are for everyone
@@ -52,21 +50,8 @@ export default {
     // These are for someone running a production
     playName: "Macbeth",
     invitationLink: "cuecannon.com/asdf",
-    cast: [
-      { name: "Drew", roles: ["First Witch", "Macbeth"] },
-      {
-        name: "Shokai",
-        roles: [
-          "Second Witch",
-          "Macbeth",
-          "Lady M",
-          "Boatswain",
-          "Prospero",
-          "Jackie Chan"
-        ]
-      },
-      { name: "Daniel", roles: ["Third Witch", "Macbeth"] }
-    ],
+    cast: [],
+    castMembers: [],
 
     // These are for someone joining a production
     cue: ""
@@ -121,7 +106,12 @@ export default {
         state.productions.push(production);
       };
       state.comms.onAcceptInvite = function({ identity }) {
-        state.cast.push({ name: identity, roles: ["Macbeth"] });
+        state.castMembers.push(identity);
+        const { partsByActor } = castPlay(midsummerAct3, state.castMembers);
+        state.cast = _.map(partsByActor, (parts, actor) => ({
+          name: actor,
+          roles: parts
+        }));
       };
       state.comms.init();
     },
