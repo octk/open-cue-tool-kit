@@ -21,17 +21,17 @@
 ### Gitcoin Grant?
 
 ### Actual Production tool
-Would need to figure out storage 
-Make this a tool for an actual production maintaining casting, 
-Do we have a broad enough canon to interest people?
+- Would need to figure out storage 
+- Make this a tool for an actual production maintaining casting, 
+- Do we have a broad enough canon to interest people?
 
 ### Social features
-Would need to figure out storage 
-Would need to figure out social moderation / abuse approach
-Auditioning? Casting? Sharing plays? Sharing notes / dramaturgy?
+- Would need to figure out storage 
+- Would need to figure out social moderation / abuse approach
+- Auditioning? Casting? Sharing plays? Sharing notes / dramaturgy?
 
 ### Accessibility features
-This would depend on Actual Production tool above
+- This would depend on Actual Production tool above
 - attaching audio context for writers, directors
 - syncing audience tools
 
