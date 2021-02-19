@@ -17,25 +17,24 @@
 - Internationalization
 - Decentralized storage sharing (maybe like Radicle?)
 
-## Later:
-### Gitcoin Grant?
+## Down the road
 
-### Actual Production tool
+### Build for theatermakers?
 - Would need to figure out storage 
 - Make this a tool for an actual production maintaining casting, 
 - Do we have a broad enough canon to interest people?
 
-### Social features
+### Build for larger theater community?
 - Would need to figure out storage 
 - Would need to figure out social moderation / abuse approach
 - Auditioning? Casting? Sharing plays? Sharing notes / dramaturgy?
 
-### Accessibility features
+### Build for improved accessibility in productions?
 - This would depend on Actual Production tool above
 - attaching audio context for writers, directors
 - syncing audience tools
 
-### Finance features
-- Quadratic performance funding for writers?
+### Build for underfunded performance artists?
+- Quadratic performance funding for writers/curators?
 - Endowment smart contract?
 - Gitcoin-like incentives?
