@@ -6,7 +6,8 @@ import {
   IonMenuButton,
   IonPage,
   IonTitle,
-  IonToolbar
+  IonToolbar,
+  IonIcon
 } from "@ionic/vue";
 export default {
   name: "Starting",
@@ -17,19 +18,20 @@ export default {
     IonMenuButton,
     IonPage,
     IonTitle,
-    IonToolbar
+    IonToolbar,
+    IonIcon
   },
   computed: {
     ...mapGetters({ productions: "PRODUCTIONS" })
   },
   methods: {
     ...mapActions({
+      init: "INIT",
       makeProduction: "MAKE_NEW_PRODUCTION",
-      initComms: "INIT_COMMS",
       joinProduction: "ACCEPT_INVITE"
     })
   },
   created() {
-    this.initComms();
+    this.init();
   }
 };

@@ -1,43 +1,10 @@
-import Comms from "../net";
 import _ from "lodash";
+
+import Comms from "../net";
 import midsummerAct3 from "../../midsummer3.json";
-
-function castPlay(lines, actors) {
-  // See how many cues each part has
-  const cueCountByPart = {};
-  for (var i = 0; i < lines.length; i++) {
-    const part = lines[i].s; // S for speaker
-    if (!cueCountByPart[part]) {
-      cueCountByPart[part] = 0; // Initialize
-    }
-    cueCountByPart[part] += 1;
-  }
-
-  const parts = Object.keys(cueCountByPart);
-  const partsByActor = {};
-  for (const actor of actors) {
-    partsByActor[actor] = [];
-  }
-  // Split parts keeping cue count even(ish)
-  for (i = 0; i < parts.length; i++) {
-    const actorWithFewestCues = _.minBy(actors, actorName => {
-      return _.sum(_.map(partsByActor[actorName], p => cueCountByPart[p]));
-    });
-    partsByActor[actorWithFewestCues].push(parts[i]);
-  }
-
-  const actorsByPart = {};
-  for (i = 0; i < parts.length; i++) {
-    const part = parts[i];
-    for (const actor of actors) {
-      if (_.includes(partsByActor[actor], part)) {
-        actorsByPart[part] = actor;
-      }
-    }
-  }
-
-  return { actorsByPart, partsByActor };
-}
+import castPlay from "../core/casting";
+import Canon from "../core/canon";
+const canon = new Canon();
 
 export default {
   state: {
@@ -58,7 +25,8 @@ export default {
 
     // These are for someone joining a production
     cue: "",
-    part: ""
+    part: "",
+    script: midsummerAct3
   },
   getters: {
     PLAY_NAME(state) {
@@ -95,16 +63,26 @@ export default {
     }
   },
   actions: {
-    SELECT_PLAY({ state }, play) {
+    async SELECT_PLAY({ state }, play) {
       state.playName = play.title;
       state.aspiration = "casting";
       state.cast = [];
+      state.script = await canon.fetchScriptByTitle(play.title);
 
       const id = state.comms.makeInvite(play.title);
       state.productions.push({ id, title: play.title });
     },
     MAKE_NEW_PRODUCTION({ state }) {
       state.aspiration = "browsing";
+    },
+    INIT({ dispatch }) {
+      dispatch("LOAD_SCRIPTS");
+      dispatch("INIT_COMMS");
+    },
+
+    async LOAD_SCRIPTS({ state }) {
+      const response = await canon.loadScriptIndex();
+      state.plays = response.map(title => ({ title }));
     },
 
     INIT_COMMS({ state }) {
@@ -113,8 +91,9 @@ export default {
         state.productions.push(production);
       };
       state.comms.onAcceptInvite = function({ identity }) {
+        console.log(arguments);
         state.castMembers.push(identity);
-        state.casting = castPlay(midsummerAct3, state.castMembers);
+        state.casting = castPlay(state.script, state.castMembers);
         state.cast = _.map(state.casting.partsByActor, (parts, actor) => ({
           name: actor,
           roles: parts
@@ -132,7 +111,7 @@ export default {
       };
 
       function setCues() {
-        const line = midsummerAct3[state.lineNumber];
+        const line = state.script[state.lineNumber];
         const currentActor = state.actorsByPart[line.s];
         if (currentActor === state.identity) {
           state.part = line.s;
@@ -145,8 +124,11 @@ export default {
       state.comms.init();
     },
 
+    // Production communication
     async ACCEPT_INVITE({ state }, production) {
       state.aspiration = "cueing";
+      state.script = await canon.fetchScriptByTitle(production.title);
+      state.playName = production.title;
       state.identity = await state.comms.acceptInvite(production);
     },
     BEGIN_SHOW({ state }) {
