@@ -28,13 +28,16 @@ class CueScriptProtocol {
       this.lobbyTopic,
       this.updateFromProtocolEvent(this)
     );
+
+    this.libp2p.connectionManager.on("peer:connect", handlers.onNewActor);
   }
 
+  // Responses to messages
   updateFromProtocolEvent(self) {
     // Closure around this as self to pass handlers
     return function(message) {
       const {
-        onNewProduction,
+        onShareProduction,
         onAcceptInvite,
         onBeginShow,
         onCueNextActor
@@ -42,8 +45,8 @@ class CueScriptProtocol {
       try {
         const request = protocol.decode(message.data);
         switch (request.type) {
-          case protocol.Type.NEW_PRODUCTION:
-            onNewProduction(request.newProduction);
+          case protocol.Type.SHARE_PRODUCTION:
+            onShareProduction(request.shareProduction);
             break;
           case protocol.Type.ACCEPT_INVITE:
             onAcceptInvite(request.acceptInvite);
@@ -63,40 +66,31 @@ class CueScriptProtocol {
     };
   }
 
+  // General Messages
+  // (empty)
+
+  // Director Messages
   async createNewProduction(title) {
     const id = (~~(Math.random() * 1e9)).toString(36) + Date.now();
+    const production = await this.shareProduction({ title, id });
+    return production;
+  }
+
+  async shareProduction({ title, id }) {
+    // FIXME all productions are on the same channel
+
     await this.libp2p.pubsub.publish(
       this.lobbyTopic,
       protocol.encode({
-        type: protocol.Type.NEW_PRODUCTION,
-        newProduction: {
+        type: protocol.Type.SHARE_PRODUCTION,
+        shareProduction: {
           title,
           id
         }
       })
-    ); // Open casting to everyone
-
-    await this.libp2p.pubsub.subscribe(
-      this.pubsubFromId(id),
-      this.updateFromProduction
-    ); // Listen for responses
-    return id;
-  }
-
-  async joinProduction(id, userHandle) {
-    await this.libp2p.pubsub.subscribe(
-      this.pubsubFromId(id),
-      this.updateFromProduction
     );
-    await this.libp2p.pubsub.publish(
-      this.pubsubFromId(id),
-      protocol.encode({
-        type: protocol.Type.ACCEPT_INVITE,
-        acceptInvite: {
-          identity: userHandle
-        }
-      })
-    );
+
+    return { title, id };
   }
 
   async beginShow(actorsByPart) {
@@ -107,6 +101,19 @@ class CueScriptProtocol {
         beginShow: { actorsByPart }
       })
     ); // Empty b/c ids broken, fixme is below
+  }
+
+  // Actor messages
+  async joinProduction(id, userHandle) {
+    await this.libp2p.pubsub.publish(
+      this.pubsubFromId(id),
+      protocol.encode({
+        type: protocol.Type.ACCEPT_INVITE,
+        acceptInvite: {
+          identity: userHandle
+        }
+      })
+    );
   }
 
   async cueNextActor() {
@@ -134,24 +141,29 @@ export default class Comms {
 
     // Define handlers and begin protocol
     const {
-      onNewProduction,
+      onShareProduction,
       onAcceptInvite,
+      onNewActor,
       onBeginShow,
       onCueNextActor
     } = this;
 
     this.cueScriptProtocol = new CueScriptProtocol(this.libP2pNode, {
-      onNewProduction,
+      onShareProduction,
       onAcceptInvite,
+      onNewActor,
       onBeginShow,
       onCueNextActor
     });
   }
 
-  // User intentions involving the network
+  // Director messages
   async makeInvite(title) {
-    const id = await this.cueScriptProtocol.createNewProduction(title);
-    return id;
+    const production = await this.cueScriptProtocol.createNewProduction(title);
+    return production;
+  }
+  async shareProduction(production) {
+    return await this.cueScriptProtocol.shareProduction(production);
   }
   async acceptInvite({ id }) {
     // id => productionId FIXME
@@ -162,6 +174,7 @@ export default class Comms {
     await this.cueScriptProtocol.beginShow(actorsByPart);
   }
 
+  // Actor messages
   async cueNextActor() {
     await this.cueScriptProtocol.cueNextActor();
   }

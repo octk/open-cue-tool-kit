@@ -18,7 +18,7 @@ export default {
     actorsByPart: {},
 
     // Director model
-    playName: "Midsummer Act 3",
+    currentProductionIndex: -1,
     invitationLink: "cuecannon.com/asdf",
     cast: [],
     casting: null,
@@ -31,7 +31,7 @@ export default {
   },
   getters: {
     PLAY_NAME(state) {
-      return state.playName;
+      return _.get(state, `productions.${state.currentProductionIndex}.title`);
     },
     INVITATION_LINK(state) {
       return state.invitationLink;
@@ -65,7 +65,7 @@ export default {
   },
   actions: {
     //General actions
-    INIT({ dispatch }) {
+    async INIT({ dispatch }) {
       dispatch("LOAD_SCRIPTS");
       dispatch("INIT_COMMS");
     },
@@ -75,12 +75,14 @@ export default {
       state.plays = response.map(title => ({ title }));
     },
 
-    INIT_COMMS({ state }) {
+    async INIT_COMMS({ state }) {
       state.comms = new Comms();
 
       // Director listeners
-      state.comms.onNewProduction = function(production) {
-        state.productions.push(production);
+      state.comms.onShareProduction = function(production) {
+        if (!_.includes(state.productions, ({ id }) => id === production.id)) {
+          state.productions.push(production);
+        }
       };
       state.comms.onAcceptInvite = function({ identity }) {
         state.castMembers.push(identity);
@@ -94,6 +96,18 @@ export default {
         state.actorsByPart = actorsByPart;
         state.lineNumber = 0;
         setCues();
+      };
+      state.comms.onNewActor = function() {
+        setTimeout(function() {
+          // Delay while actor sets listeners
+          if (state.aspiration === "casting") {
+            const castingProduction =
+              state.productions[state.currentProductionIndex];
+            if (castingProduction) {
+              state.comms.shareProduction(castingProduction);
+            }
+          }
+        }, 5000);
       };
 
       // Actor listeners
@@ -113,18 +127,21 @@ export default {
         }
       }
 
-      state.comms.init();
+      await state.comms.init();
     },
 
     // Director actions
     async SELECT_PLAY({ state }, play) {
-      state.playName = play.title;
       state.aspiration = "casting";
       state.cast = [];
       state.script = await state.canon.fetchScriptByTitle(play.title);
 
-      const id = state.comms.makeInvite(play.title);
-      state.productions.push({ id, title: play.title });
+      const production = await state.comms.makeInvite(play.title);
+      state.productions.push(production);
+      state.currentProductionIndex = _.findIndex(
+        state.productions,
+        ({ id }) => id === production.id
+      );
     },
     MAKE_NEW_PRODUCTION({ state }) {
       state.aspiration = "browsing";
@@ -137,7 +154,10 @@ export default {
     async ACCEPT_INVITE({ state }, production) {
       state.aspiration = "cueing";
       state.script = await state.canon.fetchScriptByTitle(production.title);
-      state.playName = production.title;
+      state.currentProductionIndex = _.findIndex(
+        state.productions,
+        ({ id }) => id === production.id
+      );
       state.identity = await state.comms.acceptInvite(production);
     },
     CUE_NEXT_ACTOR({ state }) {
