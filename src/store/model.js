@@ -8,7 +8,7 @@ import castPlay from "../core/casting";
 
 export default {
   state: {
-    // These are for everyone
+    // General model
     comms: null,
     canon: new Canon(),
     aspiration: "starting",
@@ -17,7 +17,7 @@ export default {
     script: midsummerAct3,
     actorsByPart: {},
 
-    // These are for someone running a production
+    // Director model
     playName: "Midsummer Act 3",
     invitationLink: "cuecannon.com/asdf",
     cast: [],
@@ -25,7 +25,7 @@ export default {
     castMembers: [],
     lineNumber: 0,
 
-    // These are for someone joining a production
+    // Actor model
     cue: "",
     part: ""
   },
@@ -64,18 +64,7 @@ export default {
     }
   },
   actions: {
-    async SELECT_PLAY({ state }, play) {
-      state.playName = play.title;
-      state.aspiration = "casting";
-      state.cast = [];
-      state.script = await state.canon.fetchScriptByTitle(play.title);
-
-      const id = state.comms.makeInvite(play.title);
-      state.productions.push({ id, title: play.title });
-    },
-    MAKE_NEW_PRODUCTION({ state }) {
-      state.aspiration = "browsing";
-    },
+    //General actions
     INIT({ dispatch }) {
       dispatch("LOAD_SCRIPTS");
       dispatch("INIT_COMMS");
@@ -88,6 +77,8 @@ export default {
 
     INIT_COMMS({ state }) {
       state.comms = new Comms();
+
+      // Director listeners
       state.comms.onNewProduction = function(production) {
         state.productions.push(production);
       };
@@ -105,6 +96,7 @@ export default {
         setCues();
       };
 
+      // Actor listeners
       state.comms.onCueNextActor = function() {
         state.lineNumber += 1;
         setCues();
@@ -124,15 +116,29 @@ export default {
       state.comms.init();
     },
 
-    // Production communication
+    // Director actions
+    async SELECT_PLAY({ state }, play) {
+      state.playName = play.title;
+      state.aspiration = "casting";
+      state.cast = [];
+      state.script = await state.canon.fetchScriptByTitle(play.title);
+
+      const id = state.comms.makeInvite(play.title);
+      state.productions.push({ id, title: play.title });
+    },
+    MAKE_NEW_PRODUCTION({ state }) {
+      state.aspiration = "browsing";
+    },
+    BEGIN_SHOW({ state }) {
+      state.comms.beginShow(state.casting);
+    },
+
+    // Actor actions
     async ACCEPT_INVITE({ state }, production) {
       state.aspiration = "cueing";
       state.script = await state.canon.fetchScriptByTitle(production.title);
       state.playName = production.title;
       state.identity = await state.comms.acceptInvite(production);
-    },
-    BEGIN_SHOW({ state }) {
-      state.comms.beginShow(state.casting);
     },
     CUE_NEXT_ACTOR({ state }) {
       state.comms.cueNextActor();
