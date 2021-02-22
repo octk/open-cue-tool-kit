@@ -1,18 +1,20 @@
 import _ from "lodash";
 
 import Comms from "../net";
+import Canon from "../core/canon";
+
 import midsummerAct3 from "../../midsummer3.json";
 import castPlay from "../core/casting";
-import Canon from "../core/canon";
-const canon = new Canon();
 
 export default {
   state: {
     // These are for everyone
     comms: null,
-    productions: [],
-    plays: [{ title: "Midsummer Act 3" }],
+    canon: new Canon(),
     aspiration: "starting",
+    plays: [{ title: "Midsummer Act 3" }],
+    productions: [],
+    script: midsummerAct3,
     actorsByPart: {},
 
     // These are for someone running a production
@@ -25,8 +27,7 @@ export default {
 
     // These are for someone joining a production
     cue: "",
-    part: "",
-    script: midsummerAct3
+    part: ""
   },
   getters: {
     PLAY_NAME(state) {
@@ -67,7 +68,7 @@ export default {
       state.playName = play.title;
       state.aspiration = "casting";
       state.cast = [];
-      state.script = await canon.fetchScriptByTitle(play.title);
+      state.script = await state.canon.fetchScriptByTitle(play.title);
 
       const id = state.comms.makeInvite(play.title);
       state.productions.push({ id, title: play.title });
@@ -81,7 +82,7 @@ export default {
     },
 
     async LOAD_SCRIPTS({ state }) {
-      const response = await canon.loadScriptIndex();
+      const response = await state.canon.loadScriptIndex();
       state.plays = response.map(title => ({ title }));
     },
 
@@ -91,7 +92,6 @@ export default {
         state.productions.push(production);
       };
       state.comms.onAcceptInvite = function({ identity }) {
-        console.log(arguments);
         state.castMembers.push(identity);
         state.casting = castPlay(state.script, state.castMembers);
         state.cast = _.map(state.casting.partsByActor, (parts, actor) => ({
@@ -113,8 +113,8 @@ export default {
       function setCues() {
         const line = state.script[state.lineNumber];
         const currentActor = state.actorsByPart[line.s];
+        state.part = line.s;
         if (currentActor === state.identity) {
-          state.part = line.s;
           state.cue = line.t;
         } else {
           state.cue = "";
@@ -127,7 +127,7 @@ export default {
     // Production communication
     async ACCEPT_INVITE({ state }, production) {
       state.aspiration = "cueing";
-      state.script = await canon.fetchScriptByTitle(production.title);
+      state.script = await state.canon.fetchScriptByTitle(production.title);
       state.playName = production.title;
       state.identity = await state.comms.acceptInvite(production);
     },
