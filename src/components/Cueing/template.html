@@ -15,14 +15,12 @@
       </ion-toolbar>
     </ion-header>
     <div v-if="cue">
-      <div style="font-size: 18px; align-text: center; margin: 4em;">
+      <div :class="$style.part">
         {{part}}
       </div>
-      <div style="font-size: 16px; align-text: center; margin: 4em;">
-        {{cue}}
-      </div>
+      <div :class="$style.lines">{{cue}}</div>
     </div>
-    <div v-if="!cue" style="font-size: 16px; align-text: center; margin: 4em;">
+    <div v-if="!cue" :class="$style.listening">
       <span v-if="part"> ({{part}} speaking) </span>
       <span v-if="!part"> (Waiting for cue) </span>
     </div>
