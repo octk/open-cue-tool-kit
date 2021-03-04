@@ -16,11 +16,11 @@
     </ion-header>
 
     <ion-list>
-      <ion-list-item v-for="play in availablePlays">
+      <ion-item v-for="play in availablePlays">
         <div style="padding: 1em;" @click="selectPlay(play)">
           {{play.title}}
         </div>
-      </ion-list-item>
+      </ion-item>
     </ion-list>
   </ion-content>
 </ion-page>

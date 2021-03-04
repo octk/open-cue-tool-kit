@@ -1,26 +1,9 @@
 import { mapGetters, mapActions } from "vuex";
-import {
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonMenuButton,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonIcon
-} from "@ionic/vue";
+import * as components from "@ionic/vue";
+
 export default {
   name: "Starting",
-  components: {
-    IonButtons,
-    IonContent,
-    IonHeader,
-    IonMenuButton,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonIcon
-  },
+  components,
   computed: {
     ...mapGetters({ productions: "PRODUCTIONS" })
   },

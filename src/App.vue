@@ -11,7 +11,7 @@
 <script lang="ts">
 import { IonApp } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import {mapGetters} from 'vuex';
+import { mapGetters } from 'vuex';
 
 import Starting from './components/Starting/index.vue'
 import Browsing from './components/Browsing/index.vue' 

@@ -23,9 +23,18 @@
     </div>
 
     <div style="padding: 1em; text-align: center;">
-      <div v-if="!cast.length">
-        Waiting for performers to accept your invitation...
-      </div>
+      <ion-list>
+        <ion-item>
+          <ion-label> Autocast {{autoCast ? "on" : "off"}}</ion-label>
+          <ion-toggle @ionChange="autoCast=!autoCast" />
+        </ion-item>
+        <ion-item v-if="!cast.length">
+          <ion-label>
+            Waiting for performers to accept your invitation...
+          </ion-label>
+        </ion-item>
+      </ion-list>
+
       <ion-list v-if="cast.length">
         <div v-for="member in cast">
           <ion-item v-for="(role, index) in member.roles">

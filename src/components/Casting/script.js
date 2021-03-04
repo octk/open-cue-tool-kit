@@ -1,38 +1,13 @@
+import * as components from "@ionic/vue";
 import { mapGetters, mapActions } from "vuex";
 import QRCode from "qrcode";
 
-import {
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonMenuButton,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonInput,
-  IonLoading,
-  IonList,
-  IonItem,
-  IonItemOptions,
-  IonItemOption
-} from "@ionic/vue";
 export default {
   name: "Casting",
-  components: {
-    IonButtons,
-    IonContent,
-    IonHeader,
-    IonMenuButton,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonInput,
-    IonLoading,
-    IonList,
-    IonItem,
-    IonItemOptions,
-    IonItemOption
-  },
+  components,
+  data: () => ({
+    autoCast: true
+  }),
   computed: {
     ...mapGetters({
       playName: "PLAY_NAME",
