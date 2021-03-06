@@ -1,0 +1,12 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title> Cast X as which character?? </ion-title>
+  </ion-toolbar>
+</ion-header>
+<ion-content class="ion-padding">
+  <ion-list>
+    <ion-item v-for="option in options" @click="select(option)">
+      {{option}}
+    </ion-item>
+  </ion-list>
+</ion-content>

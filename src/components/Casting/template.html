@@ -25,8 +25,10 @@
     <div style="padding: 1em; text-align: center;">
       <ion-list>
         <ion-item>
-          <ion-label> Autocast {{autoCast ? "on" : "off"}}</ion-label>
-          <ion-toggle @ionChange="autoCast=!autoCast" />
+          <ion-label>
+            {{autoCast ? "Cast Automatically" : "Cast Manually"}}</ion-label
+          >
+          <ion-toggle @ionChange="toggleAutoCast" checked="autoCast" />
         </ion-item>
         <ion-item v-if="!cast.length">
           <ion-label>
@@ -35,11 +37,30 @@
         </ion-item>
       </ion-list>
 
-      <ion-list v-if="cast.length">
-        <div v-for="member in cast">
+      <ion-list style="margin: 1em 0em;" v-if="!autoCast && uncast.length">
+        <ion-title size="medium"> Uncast</ion-title>
+        <ion-item v-for="u in uncast">
+          <ion-button @click="castingModal">
+            <span v-if="u.actor" slot="end"> {{u.actor}} </span>
+            <div v-if="u.role">{{u.role}}</div>
+          </ion-button>
+        </ion-item>
+      </ion-list>
+
+      <ion-list style="margin: 1em 0em;" v-if="cast.length">
+        <ion-title size="medium" style="margin: 1em;"> Cast </ion-title>
+        <div v-for="member in cast" style="margin-bottom: 1.5em;">
           <ion-item v-for="(role, index) in member.roles">
-            <span v-if="index === 0"> {{member.name}} </span>
-            <div slot="end">{{role}}</div>
+            <span slot="end" v-if="index === 0">
+              <span v-if="autoCast">{{member.name}}</span>
+              <ion-button v-if="!autoCast" @click="castingModal">
+                {{member.name}}
+              </ion-button>
+            </span>
+            <div v-if="autoCast">{{role}}</div>
+            <ion-button v-if="!autoCast" @click="castingModal">
+              <div>{{role}}</div>
+            </ion-button>
           </ion-item>
         </div>
       </ion-list>

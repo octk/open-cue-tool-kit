@@ -24,6 +24,8 @@ export default {
     casting: null,
     castMembers: [],
     lineNumber: 0,
+    autoCast: true,
+    uncast: [],
 
     // Actor model
     cue: "",
@@ -56,6 +58,12 @@ export default {
     },
     PART(state) {
       return state.part;
+    },
+    AUTO_CAST(state) {
+      return state.autoCast;
+    },
+    UNCAST(state) {
+      return state.uncast;
     }
   },
   mutations: {
@@ -154,6 +162,9 @@ export default {
     },
     CUE_NEXT_ACTOR({ state }) {
       state.comms.cueNextActor();
+    },
+    TOGGLE_AUTO_CAST({ state }) {
+      state.autoCast = !state.autoCast;
     }
   }
 };
