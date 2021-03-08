@@ -1,12 +1,22 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title> Cast X as which character?? </ion-title>
+    <ion-title v-if="casting.role">
+      Cast which actor as {{casting.role}}?
+    </ion-title>
+    <ion-title v-if="casting.actor">
+      Cast {{casting.actor}} as which character?
+    </ion-title>
   </ion-toolbar>
 </ion-header>
 <ion-content class="ion-padding">
-  <ion-list>
-    <ion-item v-for="option in options" @click="select(option)">
-      {{option}}
+  <ion-list v-if="casting.role">
+    <ion-item v-for="a in actors" @click="select({...casting, actor: a})">
+      {{a}}
+    </ion-item>
+  </ion-list>
+  <ion-list v-if="casting.actor">
+    <ion-item v-for="r in roles" @click="select({...casting, role: r})">
+      {{r}}
     </ion-item>
   </ion-list>
 </ion-content>

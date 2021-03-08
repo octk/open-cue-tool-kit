@@ -37,12 +37,18 @@
         </ion-item>
       </ion-list>
 
-      <ion-list style="margin: 1em 0em;" v-if="!autoCast && uncast.length">
+      <ion-list style="margin: 1em 0em;" v-if="uncast.length">
         <ion-title size="medium"> Uncast</ion-title>
         <ion-item v-for="u in uncast">
-          <ion-button @click="castingModal">
-            <span v-if="u.actor" slot="end"> {{u.actor}} </span>
-            <div v-if="u.role">{{u.role}}</div>
+          <ion-button
+            v-if="u.actor"
+            slot="end"
+            @click="castingModal({actor: u.actor})"
+          >
+            {{u.actor}}
+          </ion-button>
+          <ion-button v-if="u.role" @click="castingModal({role: u.role})">
+            {{u.role}}
           </ion-button>
         </ion-item>
       </ion-list>
@@ -53,12 +59,15 @@
           <ion-item v-for="(role, index) in member.roles">
             <span slot="end" v-if="index === 0">
               <span v-if="autoCast">{{member.name}}</span>
-              <ion-button v-if="!autoCast" @click="castingModal">
+              <ion-button
+                v-if="!autoCast"
+                @click="castingModal({actor: member.name})"
+              >
                 {{member.name}}
               </ion-button>
             </span>
             <div v-if="autoCast">{{role}}</div>
-            <ion-button v-if="!autoCast" @click="castingModal">
+            <ion-button v-if="!autoCast" @click="castingModal({role: role})">
               <div>{{role}}</div>
             </ion-button>
           </ion-item>
@@ -69,6 +78,12 @@
   <div v-if="cast.length">
     <ion-button style="width: 100%; margin-bottom: 1em;" @click="beginShow">
       Begin show
+      <span v-if="uncast.length === 1">
+        &nbsp; (without 1 actor)
+      </span>
+      <span v-if="uncast.length > 1">
+        &nbsp; (without {{uncast.length}} actors)
+      </span>
     </ion-button>
   </div>
 </ion-page>

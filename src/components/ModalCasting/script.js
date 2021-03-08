@@ -4,16 +4,24 @@ import { mapGetters, mapActions } from "vuex";
 export default {
   name: "Modal",
   components,
-  data: () => ({
-    options: ["Hamlet", "Ophelia", "Arthur"]
-  }),
   computed: {
-    ...mapGetters({})
+    ...mapGetters({
+      casting: "CASTING",
+      actorsByPart: "ACTORS_BY_PART",
+      partsByActor: "PARTS_BY_ACTOR"
+    }),
+    roles() {
+      if (!this.actorsByPart) return [];
+      return Object.keys(this.actorsByPart);
+    },
+    actors() {
+      if (!this.partsByActor) return [];
+      return Object.keys(this.partsByActor);
+    }
   },
   methods: {
-    ...mapActions({}),
-    select() {
-      console.log("select not yet implemented");
-    }
+    ...mapActions({
+      select: "MANUAL_UPDATE_CAST"
+    })
   }
 };

@@ -20,12 +20,12 @@ export default {
     // Director model
     currentProductionId: null,
     invitationLink: "cuecannon.com/asdf",
-    cast: [],
-    casting: null,
-    castMembers: [],
+    cast: null,
+    actors: [],
     lineNumber: 0,
     autoCast: true,
-    uncast: [],
+    manuallyCast: {},
+    casting: null,
 
     // Actor model
     cue: "",
@@ -38,8 +38,13 @@ export default {
     INVITATION_LINK(state) {
       return state.invitationLink;
     },
-    CAST(state) {
-      return state.cast;
+    PARTS_BY_ACTOR(state) {
+      if (!state.cast) return {};
+      return state.cast.partsByActor;
+    },
+    ACTORS_BY_PART(state) {
+      if (!state.cast) return {};
+      return state.cast.actorsByPart;
     },
     ASPIRATION(state) {
       return state.aspiration;
@@ -62,8 +67,15 @@ export default {
     AUTO_CAST(state) {
       return state.autoCast;
     },
-    UNCAST(state) {
-      return state.uncast;
+    UNCAST_ACTORS(state) {
+      if (!state.cast) return [];
+      const notInCasting = a =>
+        !state.cast.partsByActor[a] || !state.cast.partsByActor[a].length;
+      return state.actors.filter(notInCasting);
+    },
+    // UNCAST_ROLES FIXME
+    CASTING(state) {
+      return state.casting;
     }
   },
   mutations: {
@@ -88,12 +100,8 @@ export default {
 
       // Director listeners
       state.comms.onAcceptInvite = function({ identity }) {
-        state.castMembers.push(identity);
-        state.casting = castPlay(state.script, state.castMembers);
-        state.cast = _.map(state.casting.partsByActor, (parts, actor) => ({
-          name: actor,
-          roles: parts
-        }));
+        state.actors.push(identity);
+        state.cast = castPlay(state.script, state.actors, state.manuallyCast);
       };
       state.comms.onBeginShow = function({ actorsByPart }) {
         state.actorsByPart = actorsByPart;
@@ -150,8 +158,16 @@ export default {
     MAKE_NEW_PRODUCTION({ state }) {
       state.aspiration = "browsing";
     },
+    SET_CASTING({ state }, casting) {
+      state.casting = casting;
+    },
+    MANUAL_UPDATE_CAST({ state }, { role, actor }) {
+      state.manuallyCast[role] = actor;
+      console.log(JSON.stringify(state.manuallyCast));
+      state.cast = castPlay(state.script, state.actors, state.manuallyCast);
+    },
     BEGIN_SHOW({ state }) {
-      state.comms.beginShow(state.casting);
+      state.comms.beginShow(state.cast);
     },
 
     // Actor actions

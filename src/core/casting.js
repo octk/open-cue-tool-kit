@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-export default function castPlay(lines, actors) {
+export default function castPlay(lines, actors, manuallyCast) {
   // See how many cues each part has
   const cueCountByPart = {};
   for (var i = 0; i < lines.length; i++) {
@@ -11,18 +11,26 @@ export default function castPlay(lines, actors) {
     cueCountByPart[part] += 1;
   }
 
-  const parts = Object.keys(cueCountByPart);
   const partsByActor = {};
+  const parts = Object.keys(cueCountByPart);
   for (const actor of actors) {
     partsByActor[actor] = [];
-  }
-  // Split parts keeping cue count even(ish)
-  for (i = 0; i < parts.length; i++) {
-    const actorWithFewestCues = _.minBy(actors, actorName => {
-      return _.sum(_.map(partsByActor[actorName], p => cueCountByPart[p]));
+    _.forEach(manuallyCast, (a, part) => {
+      if (a === actor) {
+        partsByActor[actor].push(part);
+      }
     });
-    partsByActor[actorWithFewestCues].push(parts[i]);
   }
+
+  // Split parts keeping cue count even(ish)
+  _.forEach(parts, part => {
+    if (!manuallyCast[part]) {
+      const actorWithFewestCues = _.minBy(actors, actorName => {
+        return _.sum(_.map(partsByActor[actorName], p => cueCountByPart[p]));
+      });
+      partsByActor[actorWithFewestCues].push(part);
+    }
+  });
 
   const actorsByPart = {};
   for (i = 0; i < parts.length; i++) {
