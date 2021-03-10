@@ -5,6 +5,7 @@
     <casting v-if="aspiration === 'casting'"/>
     <accepting v-if="aspiration === 'accepting'"/> 
     <cueing v-if="aspiration === 'cueing'" />
+    <naming v-if="aspiration === 'naming'" />
   </IonApp>
 </template>
 
@@ -18,6 +19,7 @@ import Browsing from './components/Browsing/index.vue'
 import Casting from './components/Casting/index.vue' 
 import Accepting from './components/Accepting/index.vue' 
 import Cueing from './components/Cueing/index.vue'
+import Naming from "./components/Naming/index.vue"
 
 export default defineComponent({
   name: 'App',
@@ -27,7 +29,8 @@ export default defineComponent({
     Browsing,
     Casting,
     Accepting,
-    Cueing
+    Cueing,
+    Naming 
   },
   computed: {
     ...mapGetters({aspiration: "ASPIRATION" })

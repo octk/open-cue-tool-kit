@@ -14,12 +14,16 @@ export default {
       playName: "PLAY_NAME",
       invitationLink: "INVITATION_LINK",
       partsByActor: "PARTS_BY_ACTOR",
-      uncast: "UNCAST",
-      autoCast: "AUTO_CAST"
+      uncast: "UNCAST_ACTORS",
+      autoCast: "AUTO_CAST",
+      actors: "ACTORS"
     }),
     cast() {
-      return _.map(this.partsByActor, (parts, actor) => ({
-        name: actor,
+      const namesByActorId = _.keyBy(this.actors, "identity");
+      const actorName = id => _.get(namesByActorId, [id, "name"]) || id;
+      console.log("here");
+      return _.map(this.partsByActor, (parts, actorId) => ({
+        name: actorName(actorId),
         roles: parts
       }));
     }

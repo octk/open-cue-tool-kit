@@ -29,7 +29,8 @@ export default {
 
     // Actor model
     cue: "",
-    part: ""
+    part: "",
+    production: null
   },
   getters: {
     PLAY_NAME(state) {
@@ -37,6 +38,9 @@ export default {
     },
     INVITATION_LINK(state) {
       return state.invitationLink;
+    },
+    ACTORS(state) {
+      return state.actors;
     },
     PARTS_BY_ACTOR(state) {
       if (!state.cast) return {};
@@ -69,8 +73,9 @@ export default {
     },
     UNCAST_ACTORS(state) {
       if (!state.cast) return [];
-      const notInCasting = a =>
-        !state.cast.partsByActor[a] || !state.cast.partsByActor[a].length;
+      const notInCasting = ({ identity }) =>
+        !state.cast.partsByActor[identity] ||
+        !state.cast.partsByActor[identity].length;
       return state.actors.filter(notInCasting);
     },
     // UNCAST_ROLES FIXME
@@ -99,7 +104,7 @@ export default {
       state.comms = new Comms();
 
       // Director listeners
-      state.comms.onAcceptInvite = function({ identity }) {
+      state.comms.onAcceptInvite = function(identity) {
         state.actors.push(identity);
         state.cast = castPlay(state.script, state.actors, state.manuallyCast);
       };
@@ -163,7 +168,6 @@ export default {
     },
     MANUAL_UPDATE_CAST({ state }, { role, actor }) {
       state.manuallyCast[role] = actor;
-      console.log(JSON.stringify(state.manuallyCast));
       state.cast = castPlay(state.script, state.actors, state.manuallyCast);
     },
     BEGIN_SHOW({ state }) {
@@ -171,10 +175,19 @@ export default {
     },
 
     // Actor actions
-    async ACCEPT_INVITE({ state }, production) {
+    async SET_NAME({ state }, name) {
       state.aspiration = "cueing";
-      state.script = await state.canon.fetchScriptByTitle(production.title);
-      state.identity = await state.comms.acceptInvite(production);
+      state.script = await state.canon.fetchScriptByTitle(
+        state.production.title
+      );
+      state.identity = await state.comms.acceptInvite({
+        ...state.production,
+        name
+      });
+    },
+    async ACCEPT_INVITE({ state }, production) {
+      state.production = production;
+      state.aspiration = "naming";
     },
     CUE_NEXT_ACTOR({ state }) {
       state.comms.cueNextActor();
