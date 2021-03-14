@@ -1,3 +1,4 @@
+import _ from "lodash";
 import * as components from "@ionic/vue";
 import { mapGetters, mapActions } from "vuex";
 
@@ -7,6 +8,7 @@ export default {
   computed: {
     ...mapGetters({
       casting: "CASTING",
+      cast: "ACTORS",
       actorsByPart: "ACTORS_BY_PART",
       partsByActor: "PARTS_BY_ACTOR"
     }),
@@ -17,6 +19,10 @@ export default {
     actors() {
       if (!this.partsByActor) return [];
       return Object.keys(this.partsByActor);
+    },
+    actorNamesByActorId() {
+      if (!this.cast) return {};
+      return _.keyBy(this.cast, "identity");
     }
   },
   methods: {

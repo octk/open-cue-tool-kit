@@ -21,7 +21,6 @@ export default {
     cast() {
       const namesByActorId = _.keyBy(this.actors, "identity");
       const actorName = id => _.get(namesByActorId, [id, "name"]) || id;
-      console.log("here");
       return _.map(this.partsByActor, (parts, actorId) => ({
         name: actorName(actorId),
         roles: parts
