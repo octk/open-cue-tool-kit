@@ -41,7 +41,9 @@ export default {
     },
     pubsub: {
       enabled: true,
-      emitSelf: true
+      scoreParams: {
+        IPColocationFactorWeight: 0 // Do not penalize IP-sharing nodes
+      }
     }
   }
 };
