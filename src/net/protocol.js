@@ -22,6 +22,7 @@ message ShareProduction {
 
 message AcceptInvite {
   required string identity = 1;
+  required string name = 2;
 }
 
 message BeginShow {
