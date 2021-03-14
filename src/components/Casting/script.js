@@ -14,9 +14,9 @@ export default {
       playName: "PLAY_NAME",
       invitationLink: "INVITATION_LINK",
       partsByActor: "PARTS_BY_ACTOR",
-      uncast: "UNCAST_ACTORS",
-      autoCast: "AUTO_CAST",
-      actors: "ACTORS"
+      uncast: "DIR_UNCAST_ACTORS",
+      autoCast: "DIR_AUTO_CAST",
+      actors: "DIR_ACTORS"
     }),
     cast() {
       const namesByActorId = _.keyBy(this.actors, "identity");

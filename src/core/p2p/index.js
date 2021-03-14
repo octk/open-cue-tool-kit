@@ -133,7 +133,7 @@ class CueScriptProtocol {
   }
 }
 
-export default class Comms {
+export default class P2p {
   async init() {
     // Initialize and set debugging
     this.libP2pNode = await Libp2p.create(libP2pConfig);

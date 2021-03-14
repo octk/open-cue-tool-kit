@@ -2,8 +2,7 @@ import { createApp } from "vue";
 import App from "./App.vue";
 
 import { IonicVue } from "@ionic/vue";
-import { createStore } from "vuex";
-import model from "./store/model.js";
+import createStore from "./store";
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/vue/css/core.css";
@@ -26,6 +25,6 @@ import "./theme/variables.css";
 
 const app = createApp(App)
   .use(IonicVue)
-  .use(createStore({ modules: { model } }));
+  .use(createStore());
 
 app.mount("#app");

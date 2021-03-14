@@ -33,7 +33,7 @@ export default defineComponent({
     Naming 
   },
   computed: {
-    ...mapGetters({aspiration: "ASPIRATION" })
+    ...mapGetters({aspiration: "APP_ASPIRATION" })
   }
 });
 </script>

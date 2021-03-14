@@ -6,12 +6,12 @@ export default {
   components,
   computed: {
     ...mapGetters({
-      availablePlays: "PLAYS"
+      availablePlays: "DIR_PLAYS"
     })
   },
   methods: {
     ...mapActions({
-      selectPlay: "SELECT_PLAY"
+      selectPlay: "DIR_SELECT_PLAY"
     })
   }
 };

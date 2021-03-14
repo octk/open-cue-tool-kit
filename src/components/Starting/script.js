@@ -5,13 +5,13 @@ export default {
   name: "Starting",
   components,
   computed: {
-    ...mapGetters({ productions: "PRODUCTIONS" })
+    ...mapGetters({ productions: "APP_PRODUCTIONS" })
   },
   methods: {
     ...mapActions({
-      init: "INIT",
-      makeProduction: "MAKE_NEW_PRODUCTION",
-      joinProduction: "ACCEPT_INVITE"
+      init: "NET_INIT",
+      makeProduction: "DIR_MAKE_NEW_PRODUCTION",
+      joinProduction: "ACT_ACCEPT_INVITE"
     })
   },
   created() {
