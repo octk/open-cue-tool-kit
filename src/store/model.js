@@ -30,6 +30,7 @@ export default {
     // Actor model
     cue: "",
     part: "",
+    parts: "",
     production: null
   },
   getters: {
@@ -81,6 +82,9 @@ export default {
     // UNCAST_ROLES FIXME
     CASTING(state) {
       return state.casting;
+    },
+    PARTS(state) {
+      return state.parts;
     }
   },
   mutations: {
@@ -137,6 +141,7 @@ export default {
       };
 
       function setCues() {
+        //Update which cue is current
         const line = state.script[state.lineNumber];
         const currentActor = state.actorsByPart[line.s];
         state.part = line.s;
@@ -145,6 +150,17 @@ export default {
         } else {
           state.cue = "";
         }
+
+        // Update which parts actors will next play
+        const speakerOrder = state.script.map(d => d.s);
+        const pastSpeakers = speakerOrder.slice(0, state.lineNumber);
+        const futureSpeakers = speakerOrder.slice(state.lineNumber);
+        const nextToSpeak = futureSpeakers.concat(pastSpeakers);
+
+        state.parts = _.sortBy(
+          state.cast.partsByActor[state.identity],
+          speaker => nextToSpeak.indexOf(speaker)
+        ).join(", ");
       }
 
       await state.comms.init();

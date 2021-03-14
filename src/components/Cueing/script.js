@@ -21,7 +21,13 @@ export default {
     IonToolbar
   },
   computed: {
-    ...mapGetters({ cue: "CUE", part: "PART", playName: "PLAY_NAME" })
+    ...mapGetters({
+      cue: "CUE",
+      part: "PART",
+      playName: "PLAY_NAME",
+      parts: "PARTS",
+      partsByActor: "PARTS_BY_ACTOR"
+    })
   },
   methods: {
     ...mapActions({ cueNextActor: "CUE_NEXT_ACTOR" })

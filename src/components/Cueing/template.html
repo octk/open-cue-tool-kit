@@ -32,4 +32,7 @@
   >
     Cue next actor
   </ion-button>
+  <ion-footer v-if="!cue" style="padding: .2em 1em; color: #444444">
+    (Your next parts: {{parts}})
+  </ion-footer>
 </ion-page>
