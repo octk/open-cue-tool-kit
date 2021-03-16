@@ -29,14 +29,14 @@ export default {
 
       // Set p2p listeners for acting and directing
       state.client.onCueNextActor = () => {
-        dispatch("ACT_NEXT_CUE");
+        dispatch("APP_NEXT_CUE");
       };
       state.client.onShareProduction = production => {
-        commit("ACT_ADD_PRODUCTION", production);
+        commit("APP_ADD_PRODUCTION", production);
       };
       state.client.onBeginShow = ({ actorsByPart }) => {
-        commit("ACT_SET_ACTORS_BY_PART", actorsByPart);
-        dispatch("ACT_START_PLAY");
+        commit("APP_SET_ACTORS_BY_PART", actorsByPart);
+        dispatch("APP_START_PLAY");
       };
       state.client.onAcceptInvite = identity => {
         commit("DIR_ADD_ACTOR", identity);
@@ -51,11 +51,23 @@ export default {
       await state.client.init();
     },
 
-    NET_BEGIN_SHOW({ state }) {
-      state.comms.beginShow(state.cast);
+    async NET_BEGIN_SHOW({ state }, cast) {
+      return await state.client.beginShow(cast);
     },
-    NET_SHARE_PRODUCTION({ state }, castingProduction) {
-      state.comms.shareProduction(castingProduction);
+    async NET_SHARE_PRODUCTION({ state }, castingProduction) {
+      return await state.client.shareProduction(castingProduction);
+    },
+    async NET_FETCH_SCRIPT({ state }, title) {
+      return await state.canon.fetchScriptByTitle(title);
+    },
+    async NET_MAKE_INVITE({ state }, title) {
+      return await state.client.makeInvite(title);
+    },
+    async NET_CUE_NEXT_ACTOR({ state }) {
+      return await state.client.cueNextActor();
+    },
+    async NET_ACCEPT_INVITE({ state }, invite) {
+      return await state.client.acceptInvite(invite);
     }
   }
 };

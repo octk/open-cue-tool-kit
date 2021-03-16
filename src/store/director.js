@@ -1,17 +1,17 @@
-import _ from "lodash";
 import castPlay from "../core/casting";
 
 export default {
   state: {
     plays: [{ title: "Midsummer Act 3" }],
     currentProductionId: null,
+    currentTitle: null,
     invitationLink: "cuecannon.com/asdf",
     cast: null,
     actors: [],
-    lineNumber: 0,
     autoCast: true,
     manuallyCast: {},
-    casting: null
+    casting: null,
+    begun: false
   },
 
   getters: {
@@ -19,7 +19,7 @@ export default {
       return state.plays;
     },
     DIR_PLAY_NAME(state) {
-      return _.get(state, `productionsById.${state.currentProductionId}.title`);
+      return state.currentTitle;
     },
     DIR_ACTORS(state) {
       return state.actors;
@@ -40,28 +40,35 @@ export default {
     // UNCAST_ROLES FIXME
     DIR_CASTING(state) {
       return state.casting;
+    },
+    DIR_PARTS_BY_ACTOR(state) {
+      if (!state.cast) return {};
+      return state.cast.partsByActor;
     }
   },
 
   mutations: {
+    DIR_BEGIN(state) {
+      state.begin = true;
+    },
     DIR_SET_PLAYS(state, plays) {
       state.plays = plays;
     },
     DIR_ADD_ACTOR(state, identity) {
-      state.actors.push(identity);
-      state.cast = castPlay(state.script, state.actors, state.manuallyCast);
+      if (!state.begun) {
+        state.actors.push(identity);
+        state.cast = castPlay(state.script, state.actors, state.manuallyCast);
+      }
     }
   },
 
   actions: {
-    async DIR_SELECT_PLAY({ state, commit }, play) {
+    async DIR_SELECT_PLAY({ state, commit, dispatch }, play) {
       commit("APP_SET_ASPIRATION", "casting");
-      state.cast = [];
-      state.script = await state.canon.fetchScriptByTitle(play.title);
-
-      const production = await state.comms.makeInvite(play.title);
-      state.currentProductionId = production.id;
-      state.productionsById[state.currentProductionId] = production;
+      state.currentTitle = play.title;
+      state.script = await dispatch("NET_FETCH_SCRIPT", state.currentTitle);
+      const production = await dispatch("NET_MAKE_INVITE", state.currentTitle);
+      state.currentProduction = production;
     },
     DIR_MAKE_NEW_PRODUCTION({ commit }) {
       commit("APP_SET_ASPIRATION", "browsing");
@@ -73,16 +80,13 @@ export default {
       state.manuallyCast[role] = actor;
       state.cast = castPlay(state.script, state.actors, state.manuallyCast);
     },
-    DIR_BEGIN_SHOW({ dispatch, state }) {
+    DIR_BEGIN_SHOW({ dispatch, state, commit }) {
+      commit("DIR_BEGIN");
       dispatch("NET_BEGIN_SHOW", state.cast);
     },
     DIR_INVITE_OPPORUNITY({ state, dispatch }) {
-      if (state.productionsById) {
-        const castingProduction =
-          state.productionsById[state.currentProductionId];
-        if (castingProduction) {
-          dispatch("NET_SHARE_PRODUCTION", castingProduction);
-        }
+      if (state.currentProduction && !state.begun) {
+        dispatch("NET_SHARE_PRODUCTION", state.currentProduction);
       }
     }
   }

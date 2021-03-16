@@ -11,9 +11,9 @@ export default {
   components: { ...vue, Modal },
   computed: {
     ...mapGetters({
-      playName: "PLAY_NAME",
-      invitationLink: "INVITATION_LINK",
-      partsByActor: "PARTS_BY_ACTOR",
+      playName: "DIR_PLAY_NAME",
+      invitationLink: "DIR_INVITATION_LINK",
+      partsByActor: "DIR_PARTS_BY_ACTOR",
       uncast: "DIR_UNCAST_ACTORS",
       autoCast: "DIR_AUTO_CAST",
       actors: "DIR_ACTORS"
@@ -35,9 +35,9 @@ export default {
   },
   methods: {
     ...mapActions({
-      beginShow: "BEGIN_SHOW",
-      toggleAutoCast: "TOGGLE_AUTO_CAST",
-      setCasting: "SET_CASTING"
+      beginShow: "DIR_BEGIN_SHOW",
+      toggleAutoCast: "DIR_TOGGLE_AUTO_CAST",
+      setCasting: "DIR_SET_CASTING"
     }),
     copyInvitationLink() {
       navigator.clipboard.writeText(this.invitationLink);

@@ -22,14 +22,14 @@ export default {
   },
   computed: {
     ...mapGetters({
-      cue: "CUE",
-      part: "PART",
-      playName: "PLAY_NAME",
-      parts: "PARTS",
-      partsByActor: "PARTS_BY_ACTOR"
+      cue: "APP_CUE",
+      part: "APP_PART",
+      playName: "APP_PLAY_NAME",
+      parts: "APP_PARTS",
+      partsByActor: "APP_PARTS_BY_ACTOR"
     })
   },
   methods: {
-    ...mapActions({ cueNextActor: "CUE_NEXT_ACTOR" })
+    ...mapActions({ cueNextActor: "APP_CUE_NEXT_ACTOR" })
   }
 };

@@ -2,7 +2,6 @@ import Vuex from "vuex";
 
 import app from "./app";
 import net from "./net";
-import actor from "./actor";
 import director from "./director";
 
 function createStore() {
@@ -10,7 +9,6 @@ function createStore() {
     modules: {
       net,
       app,
-      actor,
       director
     }
   });

@@ -11,7 +11,7 @@ export default {
     ...mapActions({
       init: "NET_INIT",
       makeProduction: "DIR_MAKE_NEW_PRODUCTION",
-      joinProduction: "ACT_ACCEPT_INVITE"
+      joinProduction: "APP_ACCEPT_INVITE"
     })
   },
   created() {

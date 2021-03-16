@@ -8,7 +8,7 @@ export default {
   computed: { ...mapGetters({}) },
   methods: {
     ...mapActions({
-      setName: "SET_NAME"
+      setName: "APP_SET_NAME"
     }),
     joinWithName() {
       this.setName(this.name);
