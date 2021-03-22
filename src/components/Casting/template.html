@@ -26,7 +26,7 @@
       <ion-list>
         <ion-item>
           <ion-label>
-            {{autoCast ? "Cast Automatically" : "Cast Manually"}}</ion-label
+            Cast Automatically: {{autoCast ? "On" : "Off"}}</ion-label
           >
           <ion-toggle @ionChange="toggleAutoCast" checked="autoCast" />
         </ion-item>
@@ -37,18 +37,16 @@
         </ion-item>
       </ion-list>
 
-      <ion-list style="margin: 1em 0em;" v-if="uncast.length">
+      <ion-list style="margin: 1em 0em;" v-if="uncastCount">
         <ion-title size="medium"> Uncast</ion-title>
-        <ion-item v-for="u in uncast">
-          <ion-button
-            v-if="u.actor"
-            slot="end"
-            @click="castingModal({actor: u.actor})"
-          >
-            {{u.actor}}
+        <ion-item v-for="u in uncastActors">
+          <ion-button slot="end" @click="castingModal({actor: u.identity})">
+            {{u.name}}
           </ion-button>
-          <ion-button v-if="u.role" @click="castingModal({role: u.role})">
-            {{u.role}}
+        </ion-item>
+        <ion-item v-for="u in uncastRoles">
+          <ion-button v-if="u" @click="castingModal({role: u})">
+            {{u}}
           </ion-button>
         </ion-item>
       </ion-list>
@@ -61,7 +59,7 @@
               <span v-if="autoCast">{{member.name}}</span>
               <ion-button
                 v-if="!autoCast"
-                @click="castingModal({actor: member.name})"
+                @click="castingModal({actor: member.id})"
               >
                 {{member.name}}
               </ion-button>
@@ -75,14 +73,14 @@
       </ion-list>
     </div>
   </ion-content>
-  <div v-if="cast.length">
+  <div v-if="cast.length && !uncastRoles.length">
     <ion-button style="width: 100%; margin-bottom: 1em;" @click="beginShow">
       Begin show
-      <span v-if="uncast.length === 1">
+      <span v-if="uncastActors === 1">
         &nbsp; (without 1 actor)
       </span>
-      <span v-if="uncast.length > 1">
-        &nbsp; (without {{uncast.length}} actors)
+      <span v-if="uncastActors.count > 1">
+        &nbsp; (without {{uncastActors.count}} actors)
       </span>
     </ion-button>
   </div>

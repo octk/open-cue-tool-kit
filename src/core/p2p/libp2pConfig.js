@@ -41,7 +41,6 @@ export default {
     },
     pubsub: {
       enabled: true,
-      emitSelf: true, // Recieve own messages
       scoreParams: {
         IPColocationFactorWeight: 0 // Do not penalize IP-sharing nodes
       }

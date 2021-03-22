@@ -4,13 +4,16 @@
       Cast which actor as {{casting.role}}?
     </ion-title>
     <ion-title v-if="casting.actor">
-      Cast {{casting.actor}} as which character?
+      Cast {{actorNamesByActorId[casting.actor].name}} as which character?
     </ion-title>
   </ion-toolbar>
 </ion-header>
 <ion-content class="ion-padding">
   <ion-list v-if="casting.role">
-    <ion-item v-for="a in actors" @click="select({...casting, actor: a})">
+    <ion-item
+      v-for="a in actors"
+      @click="selectAndDismiss({...casting, actor: a})"
+    >
       {{actorNamesByActorId[a].name}}
     </ion-item>
   </ion-list>
@@ -20,3 +23,4 @@
     </ion-item>
   </ion-list>
 </ion-content>
+<ion-button @click="dismiss"> Close </ion-button>

@@ -17,7 +17,7 @@ class CueScriptProtocol {
     });
     this.libp2p.connectionManager.on("peer:disconnect", connection => {
       if (this.connectedPeers.delete(connection.remotePeer.toB58String())) {
-        console.error("disconnect", connection);
+        // console.error("disconnect", connection);
       }
     });
 

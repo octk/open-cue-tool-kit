@@ -7,10 +7,10 @@ export default {
   components,
   computed: {
     ...mapGetters({
-      casting: "CASTING",
-      cast: "ACTORS",
-      actorsByPart: "ACTORS_BY_PART",
-      partsByActor: "PARTS_BY_ACTOR"
+      casting: "DIR_CASTING",
+      cast: "DIR_ACTORS",
+      actorsByPart: "DIR_ACTORS_BY_PART",
+      partsByActor: "DIR_PARTS_BY_ACTOR"
     }),
     roles() {
       if (!this.actorsByPart) return [];
@@ -27,7 +27,12 @@ export default {
   },
   methods: {
     ...mapActions({
-      select: "MANUAL_UPDATE_CAST"
-    })
+      select: "DIR_MANUAL_UPDATE_CAST",
+      dismiss: "DIR_DISMISS_CASTING_MODAL"
+    }),
+    selectAndDismiss(selection) {
+      this.select(selection);
+      this.dismiss();
+    }
   }
 };

@@ -105,7 +105,7 @@ export default {
       commit("APP_SET_ASPIRATION", "cueing");
 
       state.script = await dispatch("NET_FETCH_SCRIPT", state.production.title);
-      state.identity = dispatch("NET_ACCEPT_INVITE", {
+      state.identity = await dispatch("NET_ACCEPT_INVITE", {
         ...state.production,
         name
       });
@@ -116,9 +116,6 @@ export default {
     },
     APP_CUE_NEXT_ACTOR({ dispatch }) {
       dispatch("NET_CUE_NEXT_ACTOR");
-    },
-    APP_TOGGLE_AUTO_CAST({ state }) {
-      state.autoCast = !state.autoCast;
     }
   }
 };

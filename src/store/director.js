@@ -1,4 +1,5 @@
 import castPlay from "../core/casting";
+import { modalController } from "@ionic/vue";
 
 export default {
   state: {
@@ -11,7 +12,8 @@ export default {
     autoCast: true,
     manuallyCast: {},
     casting: null,
-    begun: false
+    begun: false,
+    castingModal: null
   },
 
   getters: {
@@ -37,19 +39,28 @@ export default {
         !state.cast.partsByActor[identity].length;
       return state.actors.filter(notInCasting);
     },
-    // UNCAST_ROLES FIXME
+    DIR_UNCAST_ROLES(state) {
+      if (!state.cast) return [];
+      const parts = Object.keys(state.cast.actorsByPart);
+      const notInCasting = part => !state.cast.actorsByPart[part];
+      return parts.filter(notInCasting);
+    },
     DIR_CASTING(state) {
       return state.casting;
     },
     DIR_PARTS_BY_ACTOR(state) {
       if (!state.cast) return {};
       return state.cast.partsByActor;
+    },
+    DIR_ACTORS_BY_PART(state) {
+      if (!state.cast) return {};
+      return state.cast.actorsByPart;
     }
   },
 
   mutations: {
     DIR_BEGIN(state) {
-      state.begin = true;
+      state.begun = true;
     },
     DIR_SET_PLAYS(state, plays) {
       state.plays = plays;
@@ -57,7 +68,12 @@ export default {
     DIR_ADD_ACTOR(state, identity) {
       if (!state.begun) {
         state.actors.push(identity);
-        state.cast = castPlay(state.script, state.actors, state.manuallyCast);
+        state.cast = castPlay(
+          state.script,
+          state.actors,
+          state.manuallyCast,
+          state.autoCast
+        );
       }
     }
   },
@@ -78,7 +94,12 @@ export default {
     },
     DIR_MANUAL_UPDATE_CAST({ state }, { role, actor }) {
       state.manuallyCast[role] = actor;
-      state.cast = castPlay(state.script, state.actors, state.manuallyCast);
+      state.cast = castPlay(
+        state.script,
+        state.actors,
+        state.manuallyCast,
+        state.autoCast
+      );
     },
     DIR_BEGIN_SHOW({ dispatch, state, commit }) {
       commit("DIR_BEGIN");
@@ -87,6 +108,26 @@ export default {
     DIR_INVITE_OPPORUNITY({ state, dispatch }) {
       if (state.currentProduction && !state.begun) {
         dispatch("NET_SHARE_PRODUCTION", state.currentProduction);
+      }
+    },
+    DIR_TOGGLE_AUTO_CAST({ state }) {
+      state.autoCast = !state.autoCast;
+      state.cast = castPlay(
+        state.script,
+        state.actors,
+        state.manuallyCast,
+        state.autoCast
+      );
+    },
+    async DIR_DEPLOY_CASTING_MODAL({ state }, component) {
+      if (!state.begun) {
+        state.castingModalController = await modalController.create(component);
+        state.castingModalController.present();
+      }
+    },
+    async DIR_DISMISS_CASTING_MODAL({ state }) {
+      if (state.castingModalController) {
+        state.castingModalController.dismiss();
       }
     }
   }

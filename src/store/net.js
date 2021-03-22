@@ -12,6 +12,7 @@ export default {
   mutations: {},
 
   actions: {
+    // Initialization
     NET_INIT({ dispatch }) {
       dispatch("NET_LOAD_SCRIPTS");
       dispatch("NET_INIT_CLIENT");
@@ -27,19 +28,9 @@ export default {
     async NET_INIT_CLIENT({ state, dispatch, commit }) {
       state.client = new P2p();
 
-      // Set p2p listeners for acting and directing
-      state.client.onCueNextActor = () => {
-        dispatch("APP_NEXT_CUE");
-      };
+      // Set p2p listeners for picking show
       state.client.onShareProduction = production => {
         commit("APP_ADD_PRODUCTION", production);
-      };
-      state.client.onBeginShow = ({ actorsByPart }) => {
-        commit("APP_SET_ACTORS_BY_PART", actorsByPart);
-        dispatch("APP_START_PLAY");
-      };
-      state.client.onAcceptInvite = identity => {
-        commit("DIR_ADD_ACTOR", identity);
       };
       state.client.onNewActor = () => {
         // Delay while new actor sets listeners
@@ -47,12 +38,28 @@ export default {
           dispatch("DIR_INVITE_OPPORUNITY");
         }, 5000);
       };
+      state.client.onAcceptInvite = identity => {
+        commit("DIR_ADD_ACTOR", identity);
+      };
+
+      // Set p2p listeners for running show
+      state.client.onBeginShow = ({ actorsByPart }) => {
+        commit("APP_SET_ACTORS_BY_PART", actorsByPart);
+        dispatch("APP_START_PLAY");
+      };
+      state.client.onCueNextActor = () => {
+        dispatch("APP_NEXT_CUE");
+      };
 
       await state.client.init();
     },
 
-    async NET_BEGIN_SHOW({ state }, cast) {
-      return await state.client.beginShow(cast);
+    // Actions while picking show
+    async NET_MAKE_INVITE({ state }, title) {
+      return await state.client.makeInvite(title);
+    },
+    async NET_ACCEPT_INVITE({ state }, invite) {
+      return await state.client.acceptInvite(invite);
     },
     async NET_SHARE_PRODUCTION({ state }, castingProduction) {
       return await state.client.shareProduction(castingProduction);
@@ -60,14 +67,14 @@ export default {
     async NET_FETCH_SCRIPT({ state }, title) {
       return await state.canon.fetchScriptByTitle(title);
     },
-    async NET_MAKE_INVITE({ state }, title) {
-      return await state.client.makeInvite(title);
+
+    // Actions while running show
+    async NET_BEGIN_SHOW({ state }, cast) {
+      return await state.client.beginShow(cast);
     },
-    async NET_CUE_NEXT_ACTOR({ state }) {
+    async NET_CUE_NEXT_ACTOR({ state, dispatch }) {
+      dispatch("APP_NEXT_CUE");
       return await state.client.cueNextActor();
-    },
-    async NET_ACCEPT_INVITE({ state }, invite) {
-      return await state.client.acceptInvite(invite);
     }
   }
 };

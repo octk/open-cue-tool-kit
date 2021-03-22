@@ -1,25 +1,9 @@
 import { mapActions, mapGetters } from "vuex";
+import * as components from "@ionic/vue";
 
-import {
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonMenuButton,
-  IonPage,
-  IonTitle,
-  IonToolbar
-} from "@ionic/vue";
 export default {
   name: "Cueing",
-  components: {
-    IonButtons,
-    IonContent,
-    IonHeader,
-    IonMenuButton,
-    IonPage,
-    IonTitle,
-    IonToolbar
-  },
+  components,
   computed: {
     ...mapGetters({
       cue: "APP_CUE",
