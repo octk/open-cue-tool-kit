@@ -3,7 +3,7 @@ import { modalController } from "@ionic/vue";
 
 export default {
   state: {
-    plays: [{ title: "Midsummer Act 3" }],
+    plays: [],
     currentProductionId: null,
     currentTitle: null,
     invitationLink: "cuecannon.com/asdf",
@@ -79,14 +79,20 @@ export default {
   },
 
   actions: {
-    async DIR_SELECT_PLAY({ state, commit, dispatch }, play) {
+    async DIR_LOAD_PLAY({ state, commit, dispatch }, { title, lines }) {
       commit("APP_SET_ASPIRATION", "casting");
-      state.currentTitle = play.title;
-      state.script = await dispatch("NET_FETCH_SCRIPT", state.currentTitle);
-      const production = await dispatch("NET_MAKE_INVITE", state.currentTitle);
-      state.currentProduction = production;
+      state.currentTitle = title || "Untitled Play";
+      state.script = lines;
+      state.currentProduction = await dispatch(
+        "NET_MAKE_INVITE",
+        state.currentTitle
+      );
     },
-    DIR_MAKE_NEW_PRODUCTION({ commit }) {
+    async DIR_SELECT_PLAY({ dispatch }, { title }) {
+      const lines = await dispatch("NET_FETCH_SCRIPT", title);
+      dispatch("DIR_LOAD_PLAY", { title, lines });
+    },
+    DIR_BROWSE_PLAYS({ commit }) {
       commit("APP_SET_ASPIRATION", "browsing");
     },
     DIR_SET_CASTING({ state }, casting) {

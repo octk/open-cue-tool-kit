@@ -9,8 +9,8 @@ export default {
   },
   methods: {
     ...mapActions({
-      init: "NET_INIT",
-      makeProduction: "DIR_MAKE_NEW_PRODUCTION",
+      init: "APP_INIT",
+      makeProduction: "DIR_BROWSE_PLAYS",
       joinProduction: "APP_ACCEPT_INVITE"
     })
   },

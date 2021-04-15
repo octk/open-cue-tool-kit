@@ -92,6 +92,16 @@ export default {
     }
   },
   actions: {
+    async APP_INIT({ dispatch }) {
+      await dispatch("NET_INIT");
+
+      // Check for script in query params
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("script")) {
+        const script = params.get("script");
+        await dispatch("DIR_LOAD_PLAY", JSON.parse(atob(script)));
+      }
+    },
     APP_START_PLAY({ commit }) {
       commit("APP_SET_LINE_NUMBER", 0);
       commit("APP_SET_CUES_AND_PARTS");
