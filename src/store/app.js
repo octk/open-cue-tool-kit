@@ -114,7 +114,7 @@ export default {
     async APP_SET_NAME({ state, commit, dispatch }, name) {
       commit("APP_SET_ASPIRATION", "cueing");
 
-      state.script = await dispatch("NET_FETCH_SCRIPT", state.production.title);
+      state.script = state.production.lines;
       state.identity = await dispatch("NET_ACCEPT_INVITE", {
         ...state.production,
         name

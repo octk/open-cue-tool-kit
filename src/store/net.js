@@ -29,8 +29,8 @@ export default {
       state.client = new P2p();
 
       // Set p2p listeners for picking show
-      state.client.onShareProduction = production => {
-        commit("APP_ADD_PRODUCTION", production);
+      state.client.onShareProduction = ({ id, title, lines }) => {
+        commit("APP_ADD_PRODUCTION", { id, title, lines: JSON.parse(lines) });
       };
       state.client.onNewActor = () => {
         // Delay while new actor sets listeners
@@ -55,8 +55,8 @@ export default {
     },
 
     // Actions while picking show
-    async NET_MAKE_INVITE({ state }, title) {
-      return await state.client.makeInvite(title);
+    async NET_MAKE_INVITE({ state }, { title, lines }) {
+      return await state.client.makeInvite(title, lines);
     },
     async NET_ACCEPT_INVITE({ state }, invite) {
       return await state.client.acceptInvite(invite);

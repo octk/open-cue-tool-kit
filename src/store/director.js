@@ -83,10 +83,10 @@ export default {
       commit("APP_SET_ASPIRATION", "casting");
       state.currentTitle = title || "Untitled Play";
       state.script = lines;
-      state.currentProduction = await dispatch(
-        "NET_MAKE_INVITE",
-        state.currentTitle
-      );
+      state.currentProduction = await dispatch("NET_MAKE_INVITE", {
+        title: state.currentTitle,
+        lines: state.script
+      });
     },
     async DIR_SELECT_PLAY({ dispatch }, { title }) {
       const lines = await dispatch("NET_FETCH_SCRIPT", title);

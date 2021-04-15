@@ -70,13 +70,13 @@ class CueScriptProtocol {
   // (empty)
 
   // Director Messages
-  async createNewProduction(title) {
+  async createNewProduction(title, lines) {
     const id = (~~(Math.random() * 1e9)).toString(36) + Date.now();
-    const production = await this.shareProduction({ title, id });
+    const production = await this.shareProduction({ title, id, lines });
     return production;
   }
 
-  async shareProduction({ title, id }) {
+  async shareProduction({ title, id, lines }) {
     // FIXME all productions are on the same channel
 
     await this.libp2p.pubsub.publish(
@@ -85,12 +85,13 @@ class CueScriptProtocol {
         type: protocol.Type.SHARE_PRODUCTION,
         shareProduction: {
           title,
-          id
+          id,
+          lines: JSON.stringify(lines)
         }
       })
     );
 
-    return { title, id };
+    return { title, id, lines };
   }
 
   async beginShow(actorsByPart) {
@@ -159,8 +160,11 @@ export default class P2p {
   }
 
   // Director messages
-  async makeInvite(title) {
-    const production = await this.cueScriptProtocol.createNewProduction(title);
+  async makeInvite(title, lines) {
+    const production = await this.cueScriptProtocol.createNewProduction(
+      title,
+      lines
+    );
     return production;
   }
   async shareProduction(production) {

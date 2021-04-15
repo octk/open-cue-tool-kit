@@ -18,6 +18,7 @@ message Request {
 message ShareProduction {
   required string title = 1;
   required string id = 2;
+  required string lines = 3;
 }
 
 message AcceptInvite {
