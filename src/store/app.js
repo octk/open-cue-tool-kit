@@ -98,8 +98,20 @@ export default {
       // Check for script in query params
       const params = new URLSearchParams(window.location.search);
       if (params.has("script")) {
-        const script = params.get("script");
-        await dispatch("DIR_LOAD_PLAY", JSON.parse(atob(script)));
+        let script;
+        let parsedScript;
+        try {
+          script = atob(params.get("script"));
+          parsedScript = JSON.parse(script);
+          await dispatch("DIR_LOAD_PLAY", parsedScript);
+        } catch (e) {
+          console.error("Failed to load script from URL", {
+            e,
+            params,
+            script,
+            parsedScript
+          });
+        }
       }
     },
     APP_START_PLAY({ commit }) {
