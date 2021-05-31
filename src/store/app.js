@@ -127,10 +127,10 @@ export default {
       commit("APP_SET_ASPIRATION", "cueing");
 
       state.script = state.production.lines;
-      state.identity = await dispatch("NET_ACCEPT_INVITE", {
-        ...state.production,
-        name
-      });
+      state.identity = await dispatch(
+        "NET_ACCEPT_INVITE",
+        Object.assign({}, state.production, { name })
+      );
     },
     async APP_ACCEPT_INVITE({ state, commit }, production) {
       state.production = production;

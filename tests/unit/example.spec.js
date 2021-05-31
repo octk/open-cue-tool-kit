@@ -1,13 +1,31 @@
-import { expect } from 'chai'
-import { shallowMount } from '@vue/test-utils'
-import HelloWorld from '@/components/HelloWorld.vue'
+import { expect } from "chai";
+import Vuex from "vuex";
 
-describe('HelloWorld.vue', () => {
-  it('renders props.msg when passed', () => {
-    const msg = 'new message'
-    const wrapper = shallowMount(HelloWorld, {
-      props: { msg }
-    })
-    expect(wrapper.text()).to.include(msg)
-  })
-})
+var appInjector = require("inject-loader!@/store/app.js");
+var app = appInjector({ lodash: {} });
+
+var directorInjector = require("inject-loader!@/store/director.js");
+var director = directorInjector({
+  "../core/casting": {},
+  "@ionic/vue": {}
+});
+
+var netInjector = require("inject-loader!@/store/net.js");
+var net = netInjector({
+  "../core/p2p": {},
+  "../core/canon": {}
+});
+
+describe("store/index", () => {
+  it("initializes store", () => {
+    const store = new Vuex.Store({
+      modules: {
+        app,
+        director,
+        net
+      }
+    });
+
+    expect(store && null).to.be.null;
+  });
+});
