@@ -1,18 +1,4 @@
 import { expect } from "chai";
-
-//  ___        _           _                          _
-// |_ _|_ __  (_) ___  ___| |_   _ __ ___   ___   ___| | __
-//  | || '_ \ | |/ _ \/ __| __| | '_ ` _ \ / _ \ / __| |/ /
-//  | || | | || |  __/ (__| |_  | | | | | | (_) | (__|   <
-// |___|_| |_|/ |\___|\___|\__| |_| |_| |_|\___/ \___|_|\_\
-//          |__/
-//      _                           _                 _
-//   __| | ___ _ __   ___ _ __   __| | ___ _ __   ___(_) ___  ___
-//  / _` |/ _ \ '_ \ / _ \ '_ \ / _` |/ _ \ '_ \ / __| |/ _ \/ __|
-// | (_| |  __/ |_) |  __/ | | | (_| |  __/ | | | (__| |  __/\__ \
-//  \__,_|\___| .__/ \___|_| |_|\__,_|\___|_| |_|\___|_|\___||___/
-//            |_|
-
 /* eslint-disable no-unused-vars */
 import app, {
   actions as app_actions,
@@ -26,36 +12,92 @@ import director, {
 } from "@/store/director.js";
 /* eslint-enable no-unused-vars */
 
-//  _____         _
-// |_   _|__  ___| |_ ___
-//   | |/ _ \/ __| __/ __|
-//   | |  __/\__ \ |_\__ \
-//   |_|\___||___/\__|___/
+//   ____          _   _
+//  / ___|__ _ ___| |_(_)_ __   __ _
+// | |   / _` / __| __| | '_ \ / _` |
+// | |__| (_| \__ \ |_| | | | | (_| |
+//  \____\__,_|___/\__|_|_| |_|\__, |
+//                             |___/
 
 describe("casting", () => {
+  const { DIR_ADD_ACTOR } = dir_mutations;
   it("casts an actor when added", () => {
     const store = {
       actors: [],
       manuallyCast: {},
       autoCast: true,
-      casting: null,
-      script: [{ l: "Who dis", s: "xxx" }]
+      script: [{ l: "Who dis", s: "Juliet" }]
     };
-    const { DIR_ADD_ACTOR } = dir_mutations;
     const identity = { name: "Fred", identity: "pqwoenpadskfvnapsoitq" };
     DIR_ADD_ACTOR(store, identity);
     const { partsByActor } = store.cast;
     expect(partsByActor).to.have.property(identity.identity);
   });
+  it("casts a part when actor added", () => {
+    it("casts an actor when added", () => {
+      const store = {
+        actors: [],
+        manuallyCast: {},
+        autoCast: true,
+        script: [{ l: "Who dis", s: "Juliet" }]
+      };
+      const identity = { name: "Fred", identity: "pqwoenpadskfvnapsoitq" };
+      DIR_ADD_ACTOR(store, identity);
+      const { actorsByPart } = store.cast;
+      expect(actorsByPart).to.have.property("Juliet");
+    });
+  });
+  it("skips autocasting an actor when added", () => {
+    const store = {
+      actors: [],
+      manuallyCast: {},
+      autoCast: false,
+      script: [{ l: "Who dis", s: "Juliet" }]
+    };
+    const identity = { name: "Fred", identity: "pqwoenpadskfvnapsoitq" };
+    DIR_ADD_ACTOR(store, identity);
+    const { partsByActor } = store.cast;
+    expect(partsByActor[identity.identity]).to.be.an("array").that.is.empty;
+  });
+  it("casts a part when actor added", () => {
+    it("casts an actor when added", () => {
+      const store = {
+        actors: [],
+        manuallyCast: {},
+        autoCast: false,
+        script: [{ l: "Who dis", s: "Juliet" }]
+      };
+      const identity = { name: "Fred", identity: "pqwoenpadskfvnapsoitq" };
+      DIR_ADD_ACTOR(store, identity);
+      const { actorsByPart } = store.cast;
+      expect(actorsByPart).to.not.have.property("Juliet");
+    });
+  });
 });
 
+//  _   _                     _
+// | | | |_ __   ___ __ _ ___| |_
+// | | | | '_ \ / __/ _` / __| __|
+// | |_| | | | | (_| (_| \__ \ |_
+//  \___/|_| |_|\___\__,_|___/\__|
+//
+
 describe("uncast", () => {
-  const store = {};
+  const { DIR_UNCAST_ACTORS } = dir_getters;
+  const { DIR_ADD_ACTOR } = dir_mutations;
   it("initially returns []", () => {
-    const { DIR_UNCAST_ROLES } = dir_getters;
-    expect(DIR_UNCAST_ROLES(store)).to.be.an("array").that.is.empty;
+    const store = {};
+    expect(DIR_UNCAST_ACTORS(store)).to.be.an("array").that.is.empty;
   });
-  // it("has no uncast after casting");
-  // it("has uncast roles on starting");
-  // it("has uncast actors on joining");
+  it("sees an actor just added", () => {
+    const store = {
+      actors: [],
+      manuallyCast: {},
+      autoCast: false,
+      script: [{ l: "Who dis", s: "Juliet" }]
+    };
+    const identity = { name: "Fred", identity: "pqwoenpadskfvnapsoitq" };
+    DIR_ADD_ACTOR(store, identity);
+    expect(DIR_UNCAST_ACTORS(store)[0]).to.equal(identity);
+  });
 });
