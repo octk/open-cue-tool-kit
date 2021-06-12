@@ -18,13 +18,11 @@ export default {
       await dispatch("NET_INIT_CLIENT");
     },
     async NET_LOAD_SCRIPTS({ state, commit }) {
-      const response = await state.canon.loadScriptIndex();
-      commit(
-        "DIR_SET_PLAYS",
-        response.map(title => ({ title }))
-      );
+      commit("DIR_SET_PLAYS", await state.canon.loadScriptIndex());
     },
-
+    async NET_ADD_LOCAL_SCRIPT({ state }, script) {
+      await state.canon.addLocalScript(script);
+    },
     async NET_INIT_CLIENT({ state, dispatch, commit }) {
       state.client = new P2p();
 

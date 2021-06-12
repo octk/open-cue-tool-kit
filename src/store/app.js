@@ -104,6 +104,7 @@ export default {
           script = atob(params.get("script"));
           parsedScript = JSON.parse(script);
           await dispatch("DIR_LOAD_PLAY", parsedScript);
+          await dispatch("NET_ADD_LOCAL_SCRIPT", parsedScript);
         } catch (e) {
           console.error("Failed to load script from URL", {
             e,

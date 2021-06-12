@@ -29,6 +29,7 @@
     "libp2p-secio": "^0.13.1",
     "libp2p-webrtc-star": "^0.21.1",
     "libp2p-websockets": "^0.15.2",
+    "localforage": "^1.9.0",
     "qrcode": "^1.4.4",
     "vue": "^3.0.0-0",
     "vue-router": "^4.0.0-0",
