@@ -1,12 +1,14 @@
 import castPlay from "../core/casting";
 import { modalController } from "@ionic/vue";
 
+const baseUrl = location.host;
+
 export default {
   state: {
     plays: [],
     currentProductionId: null,
     currentTitle: null,
-    invitationLink: "cuecannon.com/asdf",
+    invitationLink: null,
     cast: null,
     actors: [],
     autoCast: true,
@@ -87,6 +89,7 @@ export default {
         title: state.currentTitle,
         lines: state.script
       });
+      state.invitationLink = `${baseUrl}/?invitation=${state.currentProduction.id}`;
     },
     async DIR_SELECT_PLAY({ dispatch }, { title }) {
       const lines = await dispatch("NET_FETCH_SCRIPT", title);

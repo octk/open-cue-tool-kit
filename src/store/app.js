@@ -9,7 +9,8 @@ export default {
     cue: "",
     part: "",
     parts: "",
-    production: null
+    production: null,
+    invitation: null
   },
   getters: {
     APP_CUE(state) {
@@ -50,11 +51,16 @@ export default {
     APP_SET_LINE_NUMBER(state, number) {
       state.lineNumber = number;
     },
+    APP_SET_INVITATION(state, invitation) {
+      state.invitation = invitation;
+    },
     APP_BUMP_CUE(state) {
       state.lineNumber += 1;
     },
     APP_ADD_PRODUCTION(state, production) {
-      state.productionsById[production.id] = production;
+      if (!state.invitation || state.invitation === production.id) {
+        state.productionsById[production.id] = production;
+      }
     },
     APP_SET_ACTORS_BY_PART(state, actorsByPart) {
       state.actorsByPart = actorsByPart;
@@ -92,7 +98,7 @@ export default {
     }
   },
   actions: {
-    async APP_INIT({ dispatch }) {
+    async APP_INIT({ dispatch, commit }) {
       await dispatch("NET_INIT");
 
       // Check for script in query params
@@ -113,6 +119,9 @@ export default {
             parsedScript
           });
         }
+      }
+      if (params.has("invitation")) {
+        commit("APP_SET_INVITATION", params.get("invitation"));
       }
     },
     APP_START_PLAY({ commit }) {

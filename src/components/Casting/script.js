@@ -32,11 +32,10 @@ export default {
       return this.uncastActors.length + this.uncastRoles.length;
     }
   },
-  mounted() {
-    const canvas = document.getElementById("qrCanvas");
-    QRCode.toCanvas(canvas, this.invitationLink, function(error) {
-      if (error) console.error(error);
-    });
+  watch: {
+    invitationLink() {
+      this.mountQRCode();
+    }
   },
   methods: {
     ...mapActions({
@@ -53,6 +52,17 @@ export default {
       this.deployCastingModal({
         component: CastingModal
       });
+    },
+    mountQRCode() {
+      if (this.invitationLink) {
+        const canvas = document.getElementById("qrCanvas");
+        QRCode.toCanvas(canvas, this.invitationLink, function(error) {
+          if (error)
+            console.error(
+              `Failed to create QR code with invitation link ${this.invitationLink}: ${error}`
+            );
+        });
+      }
     }
   }
 };
