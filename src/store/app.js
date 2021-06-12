@@ -42,6 +42,9 @@ export default {
     APP_PLAY_NAME(state) {
       if (!state.production) return "(missing production title)";
       return state.production.title;
+    },
+    APP_INVITATION(state) {
+      return state.invitation;
     }
   },
   mutations: {

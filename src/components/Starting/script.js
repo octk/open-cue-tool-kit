@@ -5,7 +5,7 @@ export default {
   name: "Starting",
   components,
   computed: {
-    ...mapGetters({ productions: "APP_PRODUCTIONS" })
+    ...mapGetters({ productions: "APP_PRODUCTIONS", invite: "APP_INVITATION" })
   },
   methods: {
     ...mapActions({

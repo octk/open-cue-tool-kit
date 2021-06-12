@@ -4,7 +4,13 @@
       <ion-buttons slot="start">
         <ion-menu-button color="primary"></ion-menu-button>
       </ion-buttons>
-      <ion-title> Productions</ion-title>
+      <ion-title v-if="!invite"> Productions</ion-title>
+      <ion-title v-if="invite && !productions.length">
+        Finding invitation...
+      </ion-title>
+      <ion-title v-if="invite && productions.length">
+        Found invitation
+      </ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -16,6 +22,7 @@
     </ion-header>
 
     <ion-button
+      v-if="!invite"
       style="width: 100%; margin:1em 0 1em 0;"
       @click="makeProduction"
     >
