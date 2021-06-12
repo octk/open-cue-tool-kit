@@ -70,10 +70,14 @@ class CueScriptProtocol {
   // (empty)
 
   // Director Messages
-  async createNewProduction(title, lines) {
-    const id = (~~(Math.random() * 1e9)).toString(36) + Date.now();
-    const production = await this.shareProduction({ title, id, lines });
-    return production;
+  async createNewProduction(id, title, lines) {
+    const productionSpec = { id, title, lines };
+    this.libp2p.pubsub.subscribe(
+      this.pubsubFromId(id),
+      this.updateFromProtocolEvent(this)
+    );
+    await this.shareProduction(productionSpec);
+    return productionSpec;
   }
 
   async shareProduction({ title, id, lines }) {
@@ -90,13 +94,11 @@ class CueScriptProtocol {
         }
       })
     );
-
-    return { title, id, lines };
   }
 
-  async beginShow(actorsByPart) {
+  async beginShow(id, actorsByPart) {
     await this.libp2p.pubsub.publish(
-      this.pubsubFromId(),
+      this.pubsubFromId(id),
       protocol.encode({
         type: protocol.Type.BEGIN_SHOW,
         beginShow: { actorsByPart }
@@ -106,6 +108,11 @@ class CueScriptProtocol {
 
   // Actor messages
   async joinProduction(id, userHandle, name) {
+    this.libp2p.pubsub.subscribe(
+      this.pubsubFromId(id),
+      this.updateFromProtocolEvent(this)
+    );
+
     await this.libp2p.pubsub.publish(
       this.pubsubFromId(id),
       protocol.encode({
@@ -118,9 +125,9 @@ class CueScriptProtocol {
     );
   }
 
-  async cueNextActor() {
+  async cueNextActor(id) {
     await this.libp2p.pubsub.publish(
-      this.pubsubFromId(),
+      this.pubsubFromId(id),
       protocol.encode({
         type: protocol.Type.CUE_NEXT_ACTOR
       })
@@ -128,9 +135,8 @@ class CueScriptProtocol {
   }
 
   // Utils
-  pubsubFromId(/*id*/) {
-    // For now, publish all to one channel FIXME
-    return `/libp2p/dev/cueCannon/1.0.0/lobby`;
+  pubsubFromId(id) {
+    return `/libp2p/dev/cueCannon/1.0.0/${id}`;
   }
 }
 
@@ -139,6 +145,7 @@ export default class P2p {
     // Initialize and set debugging
     this.libP2pNode = await Libp2p.create(libP2pConfig);
     this.userHandle = this.libP2pNode.peerId.toB58String();
+    this.activeShowTopic = null;
     await this.libP2pNode.start();
 
     // Define handlers and begin protocol
@@ -161,7 +168,9 @@ export default class P2p {
 
   // Director messages
   async makeInvite(title, lines) {
+    this.activeShowTopic = (~~(Math.random() * 1e9)).toString(36) + Date.now();
     const production = await this.cueScriptProtocol.createNewProduction(
+      this.activeShowTopic,
       title,
       lines
     );
@@ -171,15 +180,29 @@ export default class P2p {
     return await this.cueScriptProtocol.shareProduction(production);
   }
   async acceptInvite({ id, name }) {
+    this.activeShowTopic = id;
     await this.cueScriptProtocol.joinProduction(id, this.userHandle, name);
     return this.userHandle;
   }
   async beginShow({ actorsByPart }) {
-    await this.cueScriptProtocol.beginShow(actorsByPart);
+    if (!this.activeShowTopic) {
+      console.error(
+        `Tried to begin show with active show topic ${this.activeShowTopic}`
+      );
+      return;
+    }
+
+    await this.cueScriptProtocol.beginShow(this.activeShowTopic, actorsByPart);
   }
 
   // Actor messages
   async cueNextActor() {
-    await this.cueScriptProtocol.cueNextActor();
+    if (!this.activeShowTopic) {
+      console.error(
+        `Tried to cue next actor with active show topic ${this.activeShowTopic}`
+      );
+      return;
+    }
+    await this.cueScriptProtocol.cueNextActor(this.activeShowTopic);
   }
 }

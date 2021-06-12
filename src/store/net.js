@@ -23,7 +23,7 @@ export default {
     async NET_ADD_LOCAL_SCRIPT({ state }, script) {
       await state.canon.addLocalScript(script);
     },
-    async NET_INIT_CLIENT({ state, dispatch, commit }) {
+    async NET_INIT_CLIENT({ state, dispatch, commit, getters }) {
       state.client = new P2p();
 
       // Set p2p listeners for picking show
@@ -37,7 +37,9 @@ export default {
         }, 5000);
       };
       state.client.onAcceptInvite = identity => {
-        commit("DIR_ADD_ACTOR", identity);
+        if (getters.APP_ASPIRATION === "casting") {
+          commit("DIR_ADD_ACTOR", identity);
+        }
       };
 
       // Set p2p listeners for running show
@@ -46,7 +48,9 @@ export default {
         dispatch("APP_START_PLAY");
       };
       state.client.onCueNextActor = () => {
-        dispatch("APP_NEXT_CUE");
+        if (getters.APP_ASPIRATION === "cueing") {
+          dispatch("APP_NEXT_CUE");
+        }
       };
 
       await state.client.init();
