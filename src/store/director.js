@@ -89,7 +89,7 @@ export default {
         title: state.currentTitle,
         lines: state.script
       });
-      state.invitationLink = `${baseUrl}/?invitation=${state.currentProduction.id}`;
+      state.invitationLink = `http://${baseUrl}/?invitation=${state.currentProduction.id}`;
     },
     async DIR_SELECT_PLAY({ dispatch }, { title }) {
       const lines = await dispatch("NET_FETCH_SCRIPT", title);

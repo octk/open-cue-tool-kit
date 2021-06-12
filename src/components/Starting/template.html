@@ -17,7 +17,13 @@
   <ion-content :fullscreen="true">
     <ion-header collapse="condense">
       <ion-toolbar>
-        <ion-title size="large"> Productions </ion-title>
+        <ion-title v-if="!invite"> Productions</ion-title>
+        <ion-title v-if="invite && !productions.length">
+          Finding invitation...
+        </ion-title>
+        <ion-title v-if="invite && productions.length">
+          Found invitation
+        </ion-title>
       </ion-toolbar>
     </ion-header>
 
