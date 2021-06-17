@@ -74,7 +74,11 @@
     </div>
   </ion-content>
   <div v-if="cast.length && !uncastRoles.length">
-    <ion-button style="width: 100%; margin-bottom: 1em;" @click="beginShow">
+    <ion-button
+      style="width: 100%; margin-bottom: 1em;"
+      @click="beginShow"
+      id="begin-show"
+    >
       Begin show
       <span v-if="uncastActors === 1">
         &nbsp; (without 1 actor)

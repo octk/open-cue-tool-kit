@@ -14,8 +14,8 @@ export default {
   actions: {
     // Initialization
     async NET_INIT({ dispatch }) {
-      await dispatch("NET_LOAD_SCRIPTS");
       await dispatch("NET_INIT_CLIENT");
+      await dispatch("NET_LOAD_SCRIPTS");
     },
     async NET_LOAD_SCRIPTS({ state, commit }) {
       commit("DIR_SET_PLAYS", await state.canon.loadScriptIndex());

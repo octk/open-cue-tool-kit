@@ -1,8 +1,17 @@
 // https://docs.cypress.io/api/introduction/api.html
 
-describe('My First Test', () => {
-  it('Visits the app root url', () => {
-    cy.visit('/folder/Inbox')
-    cy.contains('#container', 'Inbox')
-  })
-})
+describe("Director flow", () => {
+  it("Makes a production", () => {
+    cy.visit("/");
+
+    cy.get("#make-new-production").click();
+    cy.get("ion-item")
+      .contains("Henry IV: Act 5.json")
+      .click({ force: true });
+    cy.get("#begin-show", {
+      timeout: 10000
+    })
+      .wait()
+      .click();
+  });
+});
