@@ -16,6 +16,20 @@
     </ion-header>
 
     <ion-list>
+      <ion-item v-if="selectedPlay" @click="deselectPlay">
+        Deselect {{selectedPlay.title}}
+      </ion-item>
+    </ion-list>
+    <ion-list>
+      <ion-item v-for="section in availableSections">
+        <div
+          style="padding: 1em; padding-left: 2em;"
+          @click="selectSection(section)"
+        >
+          {{section.title}}
+        </div>
+      </ion-item>
+
       <ion-item v-for="play in availablePlays">
         <div style="padding: 1em;" @click="selectPlay(play)">
           {{play.title}}
