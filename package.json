@@ -8,7 +8,7 @@
     "ios": "npm run build; npx cap sync; npx cap open ios",
     "test:unit": "vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e",
-    "e2e":"vue-cli-service test:e2e --headless",
+    "e2e": "vue-cli-service test:e2e --headless",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {

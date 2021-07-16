@@ -12,24 +12,45 @@ export default class Canon {
   async loadScriptIndex() {
     const localPlays = await this.localPlays();
 
-    let remoteTitles = [];
+    let remotePlays = [];
     try {
-      remoteTitles = await fetch(this.list);
-    } catch {
-      console.error(`Canon failed to load remote plays from ${this.list} `);
+      const remoteTitles = await fetch(this.list);
+      remotePlays = await Promise.all(
+        remoteTitles.map(async title => {
+          return { title, sections: this.sections(await fetch(title)) };
+        })
+      );
+    } catch (error) {
+      console.error(
+        `Canon failed to load remote plays from ${this.list} `,
+        error
+      );
     }
 
-    return Object.keys(localPlays)
-      .concat(remoteTitles)
-      .map(title => ({ title }));
+    return [
+      ...Object.entries(localPlays).map(([title, lines]) => ({
+        title,
+        sections: this.sections(lines)
+      })),
+      ...remotePlays
+    ];
   }
-  async fetchScriptByTitle(title) {
+  async fetchScriptByTitle({ title, section }) {
     let playsByTitle = await this.localPlays();
+    let lines = [];
     if (playsByTitle[title]) {
-      return playsByTitle[title];
+      lines = playsByTitle[title];
     } else {
-      return fetch(title);
+      lines = await fetch(title);
     }
+
+    if (section !== "All") {
+      lines = lines.filter(({ l: lineSection }) =>
+        lineSection.startsWith(section)
+      );
+    }
+
+    return lines;
   }
   async addLocalScript({ title, lines }) {
     const plays = await this.localPlays();
@@ -40,5 +61,22 @@ export default class Canon {
   async localPlays() {
     const plays = await localForage.getItem(this.db);
     return plays || {};
+  }
+
+  sections(lines) {
+    let sections = { All: "All" };
+    if (lines && !lines.title) {
+      // FIXME s3 old format
+      sections = {
+        ...sections,
+        ...lines.reduce((acc, { l: line }) => {
+          const [act, scene] = line.split(".");
+          acc[act] = `Act ${act}`;
+          acc[act + "." + scene] = `Act ${act} Scene ${scene}`;
+          return acc;
+        }, {})
+      };
+    }
+    return sections;
   }
 }

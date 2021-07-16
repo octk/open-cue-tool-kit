@@ -91,8 +91,8 @@ export default {
       });
       state.invitationLink = `http://${baseUrl}/?invitation=${state.currentProduction.id}`;
     },
-    async DIR_SELECT_PLAY({ dispatch }, { title }) {
-      const lines = await dispatch("NET_FETCH_SCRIPT", title);
+    async DIR_SELECT_PLAY({ dispatch }, { title, section }) {
+      const lines = await dispatch("NET_FETCH_SCRIPT", { title, section });
       dispatch("DIR_LOAD_PLAY", { title, lines });
     },
     DIR_BROWSE_PLAYS({ commit }) {

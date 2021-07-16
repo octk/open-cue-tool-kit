@@ -66,8 +66,8 @@ export default {
     async NET_SHARE_PRODUCTION({ state }, castingProduction) {
       return await state.client.shareProduction(castingProduction);
     },
-    async NET_FETCH_SCRIPT({ state }, title) {
-      return await state.canon.fetchScriptByTitle(title);
+    async NET_FETCH_SCRIPT({ state }, { title, section }) {
+      return await state.canon.fetchScriptByTitle({ title, section });
     },
 
     // Actions while running show
