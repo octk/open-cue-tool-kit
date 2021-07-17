@@ -23,25 +23,8 @@ import "@ionic/vue/css/display.css";
 /* Theme variables */
 import "./theme/variables.css";
 
-/* Hack to consolidate logs */
-const logCache = [];
-const oldLog = console.debug;
-console.debug = function() {
-  logCache.push(arguments);
-};
-setInterval(() => {
-  oldLog(logCache.length);
-  const request = new Request("/.netlify/functions/log", {
-    method: "POST",
-    body: JSON.stringify(logCache)
-  });
-  fetch(request);
-}, 5000);
-
-/* Libp2p2 debug config */
-let debug = require("debug");
-debug.log = console.debug.bind(console);
-debug.enable("libp2p:gossipsub*");
+/* Set up log aggregation */
+import "./utils/logAggregation.js";
 
 const app = createApp(App)
   .use(IonicVue)
