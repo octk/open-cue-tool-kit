@@ -31,7 +31,7 @@ console.debug = function() {
 };
 setInterval(() => {
   oldLog(logCache.length);
-  const request = new Request("/log", {
+  const request = new Request("/.netlify/functions/log", {
     method: "POST",
     body: JSON.stringify(logCache)
   });
