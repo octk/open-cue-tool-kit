@@ -12,7 +12,9 @@ export default {
     }),
     downloadLink() {
       if (this.downloadPlays) {
-        return URL.createObjectURL(new Blob([this.downloadPlays]));
+        return URL.createObjectURL(
+          new Blob(JSON.stringify([this.downloadPlays]))
+        );
       }
       return null;
     }
