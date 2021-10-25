@@ -510,6 +510,7 @@ appTemplate model =
         , div
             [ css
                 [ h_screen
+                , w_screen
                 , bg_white
                 , flex
                 , flex_col
@@ -602,7 +603,7 @@ browsingPage scripts =
         [ Attr.attribute "role" "list", css [ Tw.divide_y, Tw.divide_gray_200 ] ]
         (List.map
             (\(Script title rest) ->
-                li [ css [ Tw.py_4, Tw.flex ] ]
+                li [ css [ Tw.py_4, Tw.flex, Tw.truncate ] ]
                     [ div [ css [ Tw.ml_3 ] ]
                         [ p
                             [ css
@@ -936,7 +937,7 @@ castingSwitch autocast =
 castingPage { casting, invitationLink, manualCasting } autocast =
     let
         actorsPresent =
-            True
+            not (List.isEmpty (allActors casting))
 
         showIsCast =
             List.isEmpty (uncastParts casting)
@@ -970,7 +971,7 @@ castingPage { casting, invitationLink, manualCasting } autocast =
                         [ div [ css [ flex, justify_center ] ]
                             [ QRCode.fromString invitationLink
                                 |> Result.map
-                                    (QRCode.toSvg [ SvgA.width "200px", SvgA.height "200px" ]
+                                    (QRCode.toSvg [ SvgA.width "150px", SvgA.height "150px" ]
                                         >> fromUnstyled
                                     )
                                 |> Result.withDefault (text "Error while encoding to QRCode.")
@@ -1019,11 +1020,11 @@ castingPage { casting, invitationLink, manualCasting } autocast =
                         else
                             [ li
                                 [ css [ p_4 ] ]
-                                [ text "Waiting for actors to accept invitations..." ]
+                                [ text "Waiting for actors..." ]
                             ]
                        )
                 )
-            , div [ css [ pb_8, bg_gray_50, mt_auto ] ]
+            , div [ css [ mb_8, bg_gray_50, mt_auto ] ]
                 (if showIsCast then
                     [ button
                         [ Attr.type_ "submit"
@@ -1071,122 +1072,118 @@ acceptingPage : Script -> String -> Bool -> String -> Html Msg
 acceptingPage (Script title _) director joining name =
     div
         [ css
-            [ py_10 ]
+            [ h_full ]
         ]
-        [ header []
-            [ div
-                [ css
-                    [ max_w_7xl
-                    , mx_auto
-                    , px_4
-                    , Bp.lg [ px_8 ]
-                    , Bp.sm [ px_6 ]
-                    ]
-                ]
-                [ h1
-                    [ css
-                        [ text_3xl
-                        , font_bold
-                        , leading_tight
-                        , text_gray_900
-                        ]
-                    ]
-                    [ text
-                        (director
-                            ++ " is inviting you to join a production of "
-                            ++ title
-                        )
-                    ]
+        [ div
+            [ css
+                [ max_w_7xl
+                , mx_auto
+                , flex
+                , flex_col
+                , h_full
+                , Bp.lg [ px_8 ]
+                , Bp.sm [ px_6 ]
                 ]
             ]
-        , main_ [ css [ flex_col, h_full ] ]
-            [ div
-                [ css
-                    [ max_w_7xl
-                    , mx_auto
-                    , Bp.lg [ px_8 ]
-                    , Bp.sm [ px_6 ]
+            [ header []
+                [ div
+                    [ css
+                        [ max_w_7xl
+                        , mx_auto
+                        , px_4
+                        , Bp.lg [ px_8 ]
+                        , Bp.sm [ px_6 ]
+                        ]
+                    ]
+                    [ h1
+                        [ css
+                            [ text_3xl
+                            , font_bold
+                            , leading_tight
+                            , text_gray_900
+                            ]
+                        ]
+                        [ text
+                            ("Join a production of "
+                                ++ String.replace ".json" "" (String.replace "_" " " title)
+                                ++ "?"
+                            )
+                        ]
                     ]
                 ]
-                [ div [ css [ px_4, py_8, Bp.sm [ px_0 ] ] ]
-                    [ div [ css [ h_96 ] ]
-                        [ div []
-                            [ label
-                                [ css
-                                    [ Tw.block
-                                    , Tw.text_sm
-                                    , Tw.font_medium
-                                    , Tw.text_gray_700
-                                    ]
-                                ]
-                                [ text "What's your name?" ]
-                            , div [ css [ Tw.mt_1 ] ]
-                                [ input
-                                    [ Attr.type_ "text"
-                                    , Events.onInput ChangeName
-                                    , css
-                                        [ Tw.shadow_sm
-                                        , Tw.block
-                                        , Tw.w_full
-                                        , Tw.border_gray_300
-                                        , Tw.rounded_md
-                                        , Css.focus
-                                            [ Tw.ring_indigo_500
-                                            , Tw.border_indigo_500
-                                            ]
-                                        , Bp.sm
-                                            [ Tw.text_sm
-                                            ]
-                                        ]
-                                    , Attr.placeholder "Bill Shakespeare"
-                                    ]
-                                    []
-                                ]
-                            ]
+            , div
+                [ css [ mx_4, mt_4 ] ]
+                [ label
+                    [ css
+                        [ Tw.block
+                        , Tw.text_sm
+                        , Tw.font_medium
+                        , Tw.text_gray_700
                         ]
                     ]
-                , div []
-                    [ button
-                        ([ Attr.type_ "submit"
-                         , css
-                            [ relative
-                            , w_full
-                            , flex
-                            , justify_center
-                            , py_2
-                            , px_4
-                            , border
-                            , border_transparent
-                            , text_sm
-                            , font_medium
-                            , rounded_md
-                            , text_white
-                            , bg_indigo_600
+                    [ text "What's your name?" ]
+                , div [ css [ Tw.mt_1 ] ]
+                    [ input
+                        [ Attr.type_ "text"
+                        , Events.onInput ChangeName
+                        , css
+                            [ Tw.shadow_sm
+                            , Tw.block
+                            , Tw.w_full
+                            , Tw.border_gray_300
+                            , Tw.rounded_md
                             , Css.focus
-                                [ outline_none
-                                , ring_2
-                                , ring_offset_2
-                                , ring_indigo_500
+                                [ Tw.ring_indigo_500
+                                , Tw.border_indigo_500
                                 ]
-                            , Css.hover [ bg_indigo_700 ]
+                            , Bp.sm
+                                [ Tw.text_sm
+                                ]
                             ]
-                         ]
-                            ++ (if name == "" then
-                                    []
-
-                                else
-                                    [ onClick AcceptInvitation ]
-                               )
-                        )
-                        [ if joining then
-                            text "Joining..."
-
-                          else if name == "" then
-                            text "Enter name to join production"
-
-                          else
-                            text ("Join production as " ++ name)
+                        , Attr.placeholder "Bill Shakespeare"
                         ]
+                        []
+                    ]
+                ]
+            , div [ css [ mt_auto, mb_8, mx_4 ] ]
+                [ button
+                    ([ Attr.type_ "submit"
+                     , css
+                        [ relative
+                        , w_full
+                        , flex
+                        , justify_center
+                        , border
+                        , border_transparent
+                        , text_sm
+                        , font_medium
+                        , rounded_md
+                        , text_white
+                        , bg_indigo_600
+                        , Css.focus
+                            [ outline_none
+                            , ring_2
+                            , ring_offset_2
+                            , ring_indigo_500
+                            ]
+                        , Css.hover [ bg_indigo_700 ]
+                        ]
+                     ]
+                        ++ (if name == "" then
+                                []
+
+                            else
+                                [ onClick AcceptInvitation ]
+                           )
+                    )
+                    [ if joining then
+                        text "Joining..."
+
+                      else if name == "" then
+                        text "Enter name to join production"
+
+                      else
+                        text ("Join production as " ++ name)
                     ]
                 ]
             ]
@@ -1195,7 +1192,7 @@ acceptingPage (Script title _) director joining name =
 
 cueingPage : CueingAction -> Html Msg
 cueingPage cueingAction =
-    div [ css [ py_10 ] ]
+    div [ css [ py_10, h_full ] ]
         [ header []
             [ div
                 [ css
@@ -1226,7 +1223,7 @@ cueingPage cueingAction =
                     ]
                 ]
             ]
-        , main_ [ css [ flex_col, h_full ] ]
+        , main_ [ css [ h_full ] ]
             [ case cueingAction of
                 ShowOver ->
                     text "That's all folks!"
@@ -1238,13 +1235,18 @@ cueingPage cueingAction =
                             , mx_auto
                             , Bp.lg [ px_8 ]
                             , Bp.sm [ px_6 ]
+                            , flex
+                            , flex_col
+                            , h_full
                             ]
                         ]
                         [ div
-                            [ css [ px_4, py_8, Bp.sm [ px_0 ] ] ]
-                            [ div [ css [ h_96 ] ] [] ]
-                        , div
-                            [ css [ px_4, py_8, Bp.sm [ px_0 ] ] ]
+                            [ css
+                                [ mt_auto
+                                , pb_4
+                                , mx_4
+                                ]
+                            ]
                             [ text
                                 ("(Your next parts: "
                                     ++ String.join ", " nextParts
@@ -1260,13 +1262,18 @@ cueingPage cueingAction =
                             , mx_auto
                             , Bp.lg [ px_8 ]
                             , Bp.sm [ px_6 ]
+                            , flex
+                            , flex_col
+                            , h_full
                             ]
                         ]
                         [ div [ css [ px_4, py_8, Bp.sm [ px_0 ] ] ]
-                            [ div [ css [ h_96, whitespace_pre_wrap ] ]
+                            [ div [ css [ whitespace_pre_wrap ] ]
                                 [ text line ]
                             ]
-                        , div []
+                        , div
+                            [ css [ mt_auto, mb_8 ]
+                            ]
                             [ button
                                 [ Attr.type_ "submit"
                                 , css
@@ -1274,7 +1281,6 @@ cueingPage cueingAction =
                                     , w_full
                                     , flex
                                     , justify_center
-                                    , py_2
                                     , px_4
                                     , border
                                     , border_transparent
