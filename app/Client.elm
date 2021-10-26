@@ -45,6 +45,7 @@ type alias Model =
     , name : String
     , intent : Intention
     , autocast : Bool
+    , host : Maybe String
     }
 
 
@@ -54,6 +55,7 @@ initialModel =
     , name = ""
     , intent = Loading
     , autocast = True
+    , host = Nothing
     }
 
 
@@ -83,6 +85,7 @@ type PlatformResponse
     | StartCueing CastingChoices
     | IncrementLineNumber
     | ReportErrors (List String)
+    | SetHost String
 
 
 type PlatformCmd
@@ -188,6 +191,9 @@ updateFromPlatform response model =
         IncrementLineNumber ->
             incrementLineNumberHelper model
 
+        SetHost host ->
+            ( { model | host = Just host }, NoCmd )
+
         -- Director
         ActorJoined name actorClientId ->
             ( { model | intent = mapCasting (actorJoinedHelper model name actorClientId) model.intent }, NoCmd )
@@ -210,7 +216,6 @@ pickScriptHelper model title lines =
         | intent =
             Casting
                 { casting = makeEmptyCast lines []
-                , invitationLink = "blah blah blah"
                 , manualCasting = Nothing
                 , script = script
                 }
@@ -388,7 +393,6 @@ makeCueingAction name { script, casting, lineNumber } =
 
 type alias CastingDetails =
     { casting : Casting.CastingChoices
-    , invitationLink : String
     , script : Script
     , manualCasting : Maybe ManualChoice
     }
@@ -512,7 +516,7 @@ appTemplate model =
                         cueingPage (makeCueingAction model.name cueDetails)
 
                     Casting cast ->
-                        castingPage cast model.autocast
+                        castingPage cast model.autocast model.host
 
                     Browsing scripts ->
                         browsingPage scripts
@@ -935,7 +939,7 @@ castingSwitch autocast =
     ]
 
 
-castingPage { casting, invitationLink, manualCasting } autocast =
+castingPage { casting, manualCasting } autocast host =
     let
         actorsPresent =
             not (List.isEmpty (allActors casting))
@@ -970,13 +974,19 @@ castingPage { casting, invitationLink, manualCasting } autocast =
                     ]
                     [ div [ css [ max_w_md ] ]
                         [ div [ css [ flex, justify_center ] ]
-                            [ QRCode.fromString invitationLink
-                                |> Result.map
-                                    (QRCode.toSvg [ SvgA.width "150px", SvgA.height "150px" ]
-                                        >> fromUnstyled
-                                    )
-                                |> Result.withDefault (text "Error while encoding to QRCode.")
-                            ]
+                            (case host of
+                                Just hostUrl ->
+                                    [ QRCode.fromString hostUrl
+                                        |> Result.map
+                                            (QRCode.toSvg [ SvgA.width "150px", SvgA.height "150px" ]
+                                                >> fromUnstyled
+                                            )
+                                        |> Result.withDefault (text "Error while encoding to QRCode.")
+                                    ]
+
+                                Nothing ->
+                                    []
+                            )
                         , div []
                             [ button
                                 [ Attr.type_ "submit"

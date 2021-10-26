@@ -119,7 +119,7 @@ fetchScriptHelper clientId model =
             in
             ( model
             , Http.get
-                { url = Env.s3Url
+                { url = Env.s3Url ++ "play_list.json"
                 , expect = Http.expectJson (GotScriptList clientId) scriptIndexDecoder
                 }
             )
@@ -274,7 +274,7 @@ fetchScript name =
                 |> Json.Decode.andThen (\scriptLines -> Json.Decode.succeed (Script name scriptLines))
     in
     Http.get
-        { url = "http://macbeezy.s3.us-east-2.amazonaws.com/" ++ Url.percentEncode name
+        { url = Env.s3Url ++ Url.percentEncode name
         , expect = Http.expectJson (FetchedScript name) scriptDecoder
         }
 

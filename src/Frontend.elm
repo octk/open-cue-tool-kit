@@ -3,6 +3,7 @@ module Frontend exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Client exposing (Msg(..), PlatformResponse(..))
+import Env
 import Html
 import Html.Attributes as Attr
 import Html.Styled as Html exposing (toUnstyled)
@@ -133,7 +134,10 @@ init url key =
       , message = ""
       , cueCannonModel = Client.initialModel
       }
-    , Lamdera.sendToBackend Types.FetchScripts
+    , Cmd.batch
+        [ Lamdera.sendToBackend Types.FetchScripts
+        , relayPlatformResponse (Client.SetHost Env.host)
+        ]
     )
 
 
