@@ -1,6 +1,5 @@
 module Backend exposing (..)
 
-import Client exposing (Script(..))
 import Env
 import Html
 import Http

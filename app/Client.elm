@@ -3,7 +3,6 @@ module Client exposing
     , Msg(..)
     , PlatformCmd(..)
     , PlatformResponse(..)
-    , Script(..)
     , doNothing
     , initialModel
     , update
@@ -42,12 +41,20 @@ import Tailwind.Utilities as Tw exposing (..)
 
 
 type alias Model =
-    { name : String, intent : Intention, autocast : Bool }
+    { selectedIntentionTestCase : Maybe Int
+    , name : String
+    , intent : Intention
+    , autocast : Bool
+    }
 
 
 initialModel : Model
 initialModel =
-    { name = "", intent = Tuple.first intentionTestCases, autocast = True }
+    { selectedIntentionTestCase = Nothing
+    , name = ""
+    , intent = Loading
+    , autocast = True
+    }
 
 
 type Msg
@@ -64,6 +71,8 @@ type Msg
     | ConsiderCastingChoice ManualChoice
     | CastActorAsPart Actor Part
     | BeginShow
+      -- Debug
+    | AdvanceIntentionTestCase
 
 
 type PlatformResponse
@@ -107,7 +116,7 @@ update msg model =
             ( model, AdvanceCue )
 
         -- Director
-        PickScript (Script title lines) ->
+        PickScript { title, lines } ->
             pickScriptHelper model title lines
 
         ToggleAutocast ->
@@ -121,6 +130,22 @@ update msg model =
 
         BeginShow ->
             beginShowHelper model
+
+        -- Debug
+        AdvanceIntentionTestCase ->
+            let
+                l =
+                    List.length intentionTestCases
+
+                newIndex =
+                    case model.selectedIntentionTestCase of
+                        Nothing ->
+                            0
+
+                        Just i ->
+                            modBy l (i + 1)
+            in
+            ( { model | selectedIntentionTestCase = Just newIndex }, NoCmd )
 
 
 updateFromPlatform : PlatformResponse -> Model -> ( Model, PlatformCmd )
@@ -252,16 +277,11 @@ actorJoinedHelper model name actorClientId details =
 
             else
                 name
-
-        lines =
-            case details.script of
-                Script title l ->
-                    l
     in
     { details
         | casting =
             if model.autocast then
-                castByLineFrequency lines (newActor :: currentActors)
+                castByLineFrequency details.script.lines (newActor :: currentActors)
 
             else
                 addActor newActor details.casting
@@ -284,16 +304,10 @@ toggleAutocastHelper model =
             not model.autocast
 
         recast ({ casting, script } as details) =
-            let
-                lines =
-                    case script of
-                        Script title l ->
-                            l
-            in
             { details
                 | casting =
                     if model.autocast then
-                        castByLineFrequency lines (allActors casting)
+                        castByLineFrequency script.lines (allActors casting)
 
                     else
                         casting
@@ -304,19 +318,33 @@ toggleAutocastHelper model =
 
 view : Model -> Html Msg
 view model =
-    appTemplate model
+    appTemplate (applyIntentionTestCase model)
 
 
-type Script
-    = Script
-        String
-        (List
+applyIntentionTestCase : Model -> Model
+applyIntentionTestCase model =
+    case model.selectedIntentionTestCase of
+        Nothing ->
+            model
+
+        Just i ->
+            { model
+                | intent =
+                    List.getAt i intentionTestCases
+                        |> Maybe.withDefault Loading
+            }
+
+
+type alias Script =
+    { title : String
+    , lines :
+        List
             { speaker : String
             , line : String
             , title : String
             , part : String
             }
-        )
+    }
 
 
 type Intention
@@ -333,16 +361,11 @@ makeCueingAction name { script, casting, lineNumber } =
         myParts =
             whichPartsAreActor name casting
 
-        lines =
-            case script of
-                Script title l ->
-                    l
-
         currentLine =
-            List.getAt lineNumber lines
+            List.getAt lineNumber script.lines
 
         nextParts =
-            List.map .speaker lines
+            List.map .speaker script.lines
                 |> List.filter (\speaker -> List.notMember speaker myParts)
                 |> List.unique
     in
@@ -350,10 +373,9 @@ makeCueingAction name { script, casting, lineNumber } =
         Nothing ->
             ShowOver
 
-        Just { title, speaker } ->
-            -- FIXME using title here because scripts are messed up
+        Just { line, speaker } ->
             if List.member speaker myParts then
-                Speaking { line = title, character = speaker }
+                Speaking { line = line, character = speaker }
 
             else
                 Listening { speaker = speaker, nextParts = nextParts }
@@ -401,71 +423,6 @@ doNothing =
 
 
 
---  ___       _             _   _
--- |_ _|_ __ | |_ ___ _ __ | |_(_) ___  _ __
---  | || '_ \| __/ _ \ '_ \| __| |/ _ \| '_ \
---  | || | | | ||  __/ | | | |_| | (_) | | | |
--- |___|_| |_|\__\___|_| |_|\__|_|\___/|_| |_|
---
---  _____         _      ____
--- |_   _|__  ___| |_   / ___|__ _ ___  ___  ___
---   | |/ _ \/ __| __| | |   / _` / __|/ _ \/ __|
---   | |  __/\__ \ |_  | |__| (_| \__ \  __/\__ \
---   |_|\___||___/\__|  \____\__,_|___/\___||___/
--- Intention Test Cases for states that need visual testing.
--- intentionTestCases is a non-empty list, so we can be sure
--- the cases parse, and easily load one into the view with
--- `intention = Tuple.first intentionTestCases`
-
-
-intentionTestCases : ( Intention, List Intention )
-intentionTestCases =
-    ( Loading
-    , [ {- This example is a basic casting example with a simple script and actor set. -}
-        Casting
-            { casting =
-                [ { actors = [ "Ron" ], parts = [ "Dwight" ] }
-                , { actors = [ "Jorge" ], parts = [ "Phylis" ] }
-                , { actors = [ "Jimmy Eat Wales" ], parts = [ "Angela" ] }
-                ]
-            , invitationLink = "I always just say I'm from queens"
-            , script = Script "The Office" []
-            , manualCasting = Just (PartFor "Dwight")
-            }
-      , Casting
-            { casting =
-                [ { actors = [ "Ron" ], parts = [ "Dwight" ] }
-                , { actors = [ "Jorge" ], parts = [ "Phylis" ] }
-                , { actors = [ "Jimmy Eat Wales" ], parts = [ "Angela" ] }
-                ]
-            , invitationLink = "I always just say I'm from queens"
-            , script = Script "The Office" []
-            , manualCasting = Just (PartFor "Dwight")
-            }
-
-      {- This example is a basic example of after someone clicks an invite link -}
-      , Accepting { script = Script "Hamlet" [], director = "Ignatius", directorId = "1", joining = False }
-      , Loading
-      ]
-    )
-
-
-cueActionTestCases =
-    [ {- This example is to see whether poetic scripts are rendered correctly. We want them to respect linebreaks. -}
-      Speaking
-        { line = " truths are told,\nAs happy prologues to the swelling act\nOf the imperial theme.—I thank you, gentlemen.\n[Aside] This supernatural soliciting\nCannot be ill, cannot be good: if ill,\nWhy hath it given me earnest of success,\nCommencing in a truth? I am thane of Cawdor:\nIf good, why do I yield to that suggestion\nWhose horrid image doth unfix my hair\nAnd make my seated heart knock at my ribs,\nAgainst the use of nature? Present fears\nAre less than horrible imaginings:\nMy thought, whose murder yet is but fantastical,\nShakes so my single state of man that function\nIs smother'd in surmise, and nothing is\nBut what is not. "
-        , character = "Banquo"
-        }
-
-    {- This example is to see that we are wrapping long lines. The whole line should be visible. -}
-    , Speaking
-        { line = "Oh the transformation is happening. Anna Oh, yep. Is turning into a horse. He's turning into a horse. Look at that now is a horse. Now I'm going to fight the horse. Had a run runs a safety forever away from here. Run Hannah. What? Stop that horse, you get off of that?"
-        , character = "Brian"
-        }
-    ]
-
-
-
 --     _                  _____                    _       _
 --    / \   _ __  _ __   |_   _|__ _ __ ___  _ __ | | __ _| |_ ___
 --   / _ \ | '_ \| '_ \    | |/ _ \ '_ ` _ \| '_ \| |/ _` | __/ _ \
@@ -491,9 +448,7 @@ appTemplate model =
                             "Speaking"
 
                 Casting { script } ->
-                    case script of
-                        Script t _ ->
-                            t
+                    script.title
 
                 Browsing scripts ->
                     "Select a script"
@@ -533,7 +488,13 @@ appTemplate model =
                             [ css
                                 [ hidden, Bp.sm [ ml_6, flex, items_center ] ]
                             ]
-                            []
+                            [ case model.selectedIntentionTestCase of
+                                Just _ ->
+                                    intentionTestCaseSelector
+
+                                _ ->
+                                    emptyTemplate
+                            ]
                         ]
                     ]
                 ]
@@ -602,7 +563,7 @@ browsingPage scripts =
     ul
         [ Attr.attribute "role" "list", css [ Tw.divide_y, Tw.divide_gray_200 ] ]
         (List.map
-            (\(Script title rest) ->
+            (\({ title } as script) ->
                 li [ css [ Tw.py_4, Tw.flex, Tw.truncate ] ]
                     [ div [ css [ Tw.ml_3 ] ]
                         [ p
@@ -611,7 +572,7 @@ browsingPage scripts =
                                 , Tw.font_medium
                                 , Tw.text_gray_900
                                 ]
-                            , Events.onClick (PickScript (Script title rest))
+                            , Events.onClick (PickScript script)
                             ]
                             [ text title ]
                         ]
@@ -1069,7 +1030,7 @@ castingPage { casting, invitationLink, manualCasting } autocast =
 
 
 acceptingPage : Script -> String -> Bool -> String -> Html Msg
-acceptingPage (Script title _) director joining name =
+acceptingPage { title } director joining name =
     div
         [ css
             [ h_full ]
@@ -1618,3 +1579,163 @@ tMenu title =
 
 emptyTemplate =
     Html.text ""
+
+
+intentionTestCaseSelector =
+    div
+        [ css
+            [ Tw.absolute
+            , Tw.z_50
+            , Tw.neg_mr_2
+            , Tw.flex
+            , Tw.items_center
+            ]
+        ]
+        [ {- Mobile menu button -}
+          button
+            [ Attr.type_ "button"
+            , onClick AdvanceIntentionTestCase
+            , css
+                [ Tw.bg_white
+                , Tw.inline_flex
+                , Tw.items_center
+                , Tw.justify_center
+                , Tw.p_2
+                , Tw.rounded_md
+                , Tw.text_gray_400
+                , Css.focus
+                    [ Tw.outline_none
+                    , Tw.ring_2
+                    , Tw.ring_offset_2
+                    , Tw.ring_indigo_500
+                    ]
+                , Css.hover
+                    [ Tw.text_gray_500
+                    , Tw.bg_gray_100
+                    ]
+                ]
+            , Attr.attribute "aria-controls" "mobile-menu"
+            , Attr.attribute "aria-expanded" "false"
+            ]
+            [ {-
+                 Heroicon name: outline/menu
+
+                 Menu open: "hidden", Menu closed: "block"
+              -}
+              svg
+                [ SvgAttr.css
+                    [ Tw.block
+                    , Tw.h_6
+                    , Tw.w_6
+                    ]
+                , SvgAttr.fill "none"
+                , SvgAttr.viewBox "0 0 24 24"
+                , SvgAttr.stroke "currentColor"
+                , Attr.attribute "aria-hidden" "true"
+                ]
+                [ path
+                    [ SvgAttr.strokeLinecap "round"
+                    , SvgAttr.strokeLinejoin "round"
+                    , SvgAttr.strokeWidth "2"
+                    , SvgAttr.d "M4 6h16M4 12h16M4 18h16"
+                    ]
+                    []
+                ]
+            , {-
+                 Heroicon name: outline/x
+
+                 Menu open: "block", Menu closed: "hidden"
+              -}
+              svg
+                [ SvgAttr.css
+                    [ Tw.hidden
+                    , Tw.h_6
+                    , Tw.w_6
+                    ]
+                , SvgAttr.fill "none"
+                , SvgAttr.viewBox "0 0 24 24"
+                , SvgAttr.stroke "currentColor"
+                , Attr.attribute "aria-hidden" "true"
+                ]
+                [ path
+                    [ SvgAttr.strokeLinecap "round"
+                    , SvgAttr.strokeLinejoin "round"
+                    , SvgAttr.strokeWidth "2"
+                    , SvgAttr.d "M6 18L18 6M6 6l12 12"
+                    ]
+                    []
+                ]
+            ]
+        ]
+
+
+
+--  ___       _             _   _
+-- |_ _|_ __ | |_ ___ _ __ | |_(_) ___  _ __
+--  | || '_ \| __/ _ \ '_ \| __| |/ _ \| '_ \
+--  | || | | | ||  __/ | | | |_| | (_) | | | |
+-- |___|_| |_|\__\___|_| |_|\__|_|\___/|_| |_|
+--
+--  _____         _      ____
+-- |_   _|__  ___| |_   / ___|__ _ ___  ___  ___
+--   | |/ _ \/ __| __| | |   / _` / __|/ _ \/ __|
+--   | |  __/\__ \ |_  | |__| (_| \__ \  __/\__ \
+--   |_|\___||___/\__|  \____\__,_|___/\___||___/
+-- Intention Test Cases for states that need visual testing.
+-- intentionTestCases is a non-empty list, so we can be sure
+-- the cases parse, and easily load one into the view with
+-- `intention = Tuple.first intentionTestCases`
+
+
+intentionTestCases : List Intention
+intentionTestCases =
+    [ {- This example is a basic casting example with a simple script and actor set. -}
+      Casting
+        { casting =
+            [ { actors = [ "Ron" ], parts = [ "Dwight" ] }
+            , { actors = [ "Jorge" ], parts = [ "Phylis" ] }
+            , { actors = [ "Jimmy Eat Wales" ], parts = [ "Angela" ] }
+            ]
+        , invitationLink = "I always just say I'm from queens"
+        , script = Script "The Office" []
+        , manualCasting = Just (PartFor "Dwight")
+        }
+
+    {- This example is a basic example of after someone clicks an invite link -}
+    , Accepting { script = Script "Hamlet" [], director = "Ignatius", directorId = "1", joining = False }
+    , Loading
+    ]
+        ++ (let
+                s =
+                    { title = "Hamlet"
+                    , lines =
+                        [ { speaker = "Hamlet"
+                          , line = "As happy prologues to the swelling act\nOf the imperial theme.—I thank you, gentlemen.\n[Aside] This supernatural soliciting\nCannot be ill, cannot be good: if ill,\nWhy hath it given me earnest of success,\nCommencing in a truth? I am thane of Cawdor:\nIf good, why do I yield to that suggestion\nWhose horrid image doth unfix my hair\nAnd make my seated heart knock at my ribs,\nAgainst the use of nature? Present fears\nAre less than horrible imaginings:\nMy thought, whose murder yet is but fantastical,\nShakes so my single state of man that function\nIs smother'd in surmise, and nothing is\nBut what is not. "
+                          , title = ""
+                          , part = ""
+                          }
+                        , { speaker = "Banquo"
+                          , line = "Oh the transformation is happening. Anna Oh, yep. Is turning into a horse. He's turning into a horse. Look at that now is a horse. Now I'm going to fight the horse. Had a run runs a safety forever away from here. Run Hannah. What? Stop that horse, you get off of that?"
+                          , title = ""
+                          , part = ""
+                          }
+                        ]
+                    }
+            in
+            [ Cueing
+                { script = s
+                , casting = castByLineFrequency s.lines [ "" ] -- "" is default name, so Cueing
+                , lineNumber = 0 -- Test poetic line with linebreaks
+                }
+            , Cueing
+                { script = s
+                , casting = castByLineFrequency s.lines [ "" ] -- "" is default name, so Cueing
+                , lineNumber = 1 -- Test long line
+                }
+            , Cueing
+                { script = s
+                , casting = castByLineFrequency s.lines [ "Jeff" ] -- Listening
+                , lineNumber = 0
+                }
+            ]
+           )

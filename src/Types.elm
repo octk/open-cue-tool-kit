@@ -3,7 +3,7 @@ module Types exposing (..)
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Casting exposing (CastingChoices)
-import Client exposing (Model, Msg(..), Script(..))
+import Client exposing (Model, Msg(..))
 import Http
 import Lamdera exposing (ClientId)
 import Set
@@ -21,6 +21,18 @@ type alias FrontendModel =
 type alias BackendModel =
     { message : String
     , library : ScriptLibrary
+    }
+
+
+type alias Script =
+    { title : String
+    , lines :
+        List
+            { speaker : String
+            , line : String
+            , title : String
+            , part : String
+            }
     }
 
 
