@@ -64,6 +64,9 @@ updateFromBackend msg model =
         Types.IncrementLineNumber ->
             ( model, relayPlatformResponse Client.IncrementLineNumber )
 
+        Types.ReportErrors errors ->
+            ( model, relayPlatformResponse (Client.ReportErrors errors) )
+
 
 subscriptions m =
     Sub.none

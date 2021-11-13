@@ -82,6 +82,7 @@ type PlatformResponse
     | ActorJoined String String
     | StartCueing CastingChoices
     | IncrementLineNumber
+    | ReportErrors (List String)
 
 
 type PlatformCmd
@@ -190,6 +191,9 @@ updateFromPlatform response model =
         -- Director
         ActorJoined name actorClientId ->
             ( { model | intent = mapCasting (actorJoinedHelper model name actorClientId) model.intent }, NoCmd )
+
+        ReportErrors errors ->
+            ( { model | intent = ReportingErrors errors }, NoCmd )
 
 
 pickScriptHelper :
@@ -353,6 +357,7 @@ type Intention
     | Browsing (List Script)
     | Accepting { script : Script, director : String, directorId : String, joining : Bool }
     | Loading
+    | ReportingErrors (List String)
 
 
 makeCueingAction : String -> { script : Script, casting : CastingChoices, lineNumber : Int } -> CueingAction
@@ -458,6 +463,9 @@ appTemplate model =
 
                 Loading ->
                     ""
+
+                ReportingErrors _ ->
+                    "Reporting Errors"
     in
     div
         []
@@ -514,6 +522,9 @@ appTemplate model =
 
                     Loading ->
                         loadingPage
+
+                    ReportingErrors errors ->
+                        reportingErrorsPage errors
                 ]
             ]
         ]
@@ -554,6 +565,35 @@ loadingPage =
                         ]
                     ]
                     [ text "Loading" ]
+                ]
+            ]
+        ]
+
+
+reportingErrorsPage errors =
+    div [ css [ Tw.bg_white ] ]
+        [ div
+            [ css
+                [ Tw.max_w_7xl
+                , Tw.mx_auto
+                , Tw.py_16
+                , Tw.px_4
+                , Bp.lg [ Tw.px_8 ]
+                , Bp.sm [ Tw.py_24, Tw.px_6 ]
+                ]
+            ]
+            [ div [ css [ Tw.text_center ] ]
+                [ h2
+                    [ css
+                        [ Tw.text_base
+                        , Tw.font_semibold
+                        , Tw.text_indigo_600
+                        , Tw.tracking_wide
+                        , Tw.uppercase
+                        ]
+                    ]
+                    [ text "Errors encountered" ]
+                , pre [] [ text (String.join "\n" errors) ]
                 ]
             ]
         ]

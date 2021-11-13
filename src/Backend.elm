@@ -1,5 +1,6 @@
 module Backend exposing (..)
 
+import Dict
 import Env
 import Html
 import Http
@@ -9,6 +10,21 @@ import Set
 import Time
 import Types exposing (..)
 import Url
+
+
+
+--  _____ _            _____ _
+-- |_   _| |__   ___  | ____| |_ __ ___
+--   | | | '_ \ / _ \ |  _| | | '_ ` _ \
+--   | | | | | |  __/ | |___| | | | | | |
+--   |_| |_| |_|\___| |_____|_|_| |_| |_|
+--
+--     _             _     _ _            _
+--    / \   _ __ ___| |__ (_) |_ ___  ___| |_ _   _ _ __ ___
+--   / _ \ | '__/ __| '_ \| | __/ _ \/ __| __| | | | '__/ _ \
+--  / ___ \| | | (__| | | | | ||  __/ (__| |_| |_| | | |  __/
+-- /_/   \_\_|  \___|_| |_|_|\__\___|\___|\__|\__,_|_|  \___|
+--
 
 
 type alias Model =
@@ -26,9 +42,18 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { message = "Hello!", library = EmptyLibrary }
+    ( { message = "Hello!", library = EmptyLibrary, errorCount = Dict.empty, errorLog = [] }
     , Cmd.none
     )
+
+
+
+--  _   _           _       _
+-- | | | |_ __   __| | __ _| |_ ___  ___
+-- | | | | '_ \ / _` |/ _` | __/ _ \/ __|
+-- | |_| | |_) | (_| | (_| | ||  __/\__ \
+--  \___/| .__/ \__,_|\__,_|\__\___||___/
+--       |_|
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
@@ -50,6 +75,33 @@ updateFromFrontend sessionId clientId msg model =
 
         AdvanceCue ->
             ( model, Lamdera.broadcast IncrementLineNumber )
+
+
+update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
+update msg model =
+    case msg of
+        GotScriptList clientId response ->
+            gotScriptListHelper model clientId response
+
+        FetchScript name _ ->
+            ( model, fetchScript name )
+
+        FetchedScript name response ->
+            case response of
+                Ok script ->
+                    fetchedScriptHelper model name script
+
+                Err e ->
+                    errorHelper model name e
+
+
+
+--  _   _           _       _         _   _      _
+-- | | | |_ __   __| | __ _| |_ ___  | | | | ___| |_ __   ___ _ __ ___
+-- | | | | '_ \ / _` |/ _` | __/ _ \ | |_| |/ _ \ | '_ \ / _ \ '__/ __|
+-- | |_| | |_) | (_| | (_| | ||  __/ |  _  |  __/ | |_) |  __/ |  \__ \
+--  \___/| .__/ \__,_|\__,_|\__\___| |_| |_|\___|_| .__/ \___|_|  |___/
+--       |_|                                      |_|
 
 
 joinProductionHelper model actorClientId name directorClientId =
@@ -90,36 +142,22 @@ shareProductionHelper model casting =
     ( model, Lamdera.broadcast (StartCueing casting) )
 
 
-update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
-update msg model =
-    case msg of
-        GotScriptList clientId response ->
-            case response of
-                Ok list ->
-                    ( { model
-                        | library =
-                            Updating clientId
-                                { added = Set.empty
-                                , notAdded = Set.fromList list
-                                , scripts = []
-                                }
-                      }
-                    , Cmd.none
-                    )
+gotScriptListHelper model clientId response =
+    case response of
+        Ok list ->
+            ( { model
+                | library =
+                    Updating clientId
+                        { added = Set.empty
+                        , notAdded = Set.fromList list
+                        , scripts = []
+                        }
+              }
+            , Cmd.none
+            )
 
-                Err e ->
-                    ( model, Cmd.none )
-
-        FetchScript name _ ->
-            ( model, fetchScript name )
-
-        FetchedScript name response ->
-            case response of
-                Ok script ->
-                    fetchedScriptHelper model name script
-
-                Err e ->
-                    ( model, Cmd.none )
+        Err e ->
+            ( model, Cmd.none )
 
 
 fetchedScriptHelper : Model -> String -> Script -> ( Model, Cmd BackendMsg )
@@ -150,6 +188,73 @@ fetchedScriptHelper model name script =
         _ ->
             -- Ignore fetch if no longer updating
             ( model, Cmd.none )
+
+
+
+-- Getting scripts might fail, and we want to stop trying after a bit
+
+
+errorHelper model name e =
+    let
+        formatError =
+            "When fetching " ++ name ++ ", encountered " ++ errorToString e ++ "\n"
+
+        incrementError maybeCount =
+            Maybe.map ((+) 1) maybeCount
+                |> Maybe.withDefault 0
+                |> Just
+
+        errors =
+            Dict.get name model.errorCount
+                |> Maybe.withDefault 0
+
+        newModel =
+            { model
+                | errorLog = formatError :: model.errorLog
+                , errorCount = Dict.update name incrementError model.errorCount
+            }
+    in
+    if errors > 5 then
+        -- We stop asking for a script after 5 failures
+        ( newModel
+        , Lamdera.broadcast (ReportErrors newModel.errorLog)
+        )
+
+    else
+        ( newModel, Cmd.none )
+
+
+errorToString err =
+    -- https://package.elm-lang.org/packages/elm/http/latest/Http#expectStringResponse
+    -- BadUrl means you did not provide a valid URL.
+    -- Timeout means it took too long to get a response.
+    -- NetworkError means the user turned off their wifi, went in a cave, etc.
+    -- BadStatus means you got a response back, but the status code indicates failure.
+    -- BadBody means you got a response back with a nice status code, but the body of the response was something unexpected. The String in this case is a debugging message that explains what went wrong with your JSON decoder or whatever.
+    case err of
+        Http.BadUrl s ->
+            "Elm.HTTP bad url error: " ++ s
+
+        Http.Timeout ->
+            "Elm.HTTP timeout error"
+
+        Http.NetworkError ->
+            "Elm.HTTP network error"
+
+        Http.BadStatus i ->
+            "Elm.HTTP bad status error: " ++ String.fromInt i
+
+        Http.BadBody s ->
+            "Elm.HTTP bad body error: " ++ s
+
+
+
+--    ___                                          _
+--  / ___|___  _ __ ___  _ __ ___   __ _ _ __   __| |___
+-- | |   / _ \| '_ ` _ \| '_ ` _ \ / _` | '_ \ / _` / __|
+-- | |__| (_) | | | | | | | | | | | (_| | | | | (_| \__ \
+--  \____\___/|_| |_| |_|_| |_| |_|\__,_|_| |_|\__,_|___/
+--
 
 
 fetchScript : String -> Cmd BackendMsg

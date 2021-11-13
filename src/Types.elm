@@ -4,6 +4,7 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Casting exposing (CastingChoices)
 import Client exposing (Model, Msg(..))
+import Dict exposing (Dict)
 import Http
 import Lamdera exposing (ClientId)
 import Set
@@ -21,6 +22,8 @@ type alias FrontendModel =
 type alias BackendModel =
     { message : String
     , library : ScriptLibrary
+    , errorCount : Dict String Int
+    , errorLog : List String
     }
 
 
@@ -66,3 +69,4 @@ type ToFrontend
     | ActorJoined String ClientId
     | StartCueing CastingChoices
     | IncrementLineNumber
+    | ReportErrors (List String)
