@@ -14,16 +14,15 @@ import Url exposing (Url)
 
 type alias FrontendModel =
     { key : Key
-    , message : String
     , cueCannonModel : Model
     }
 
 
 type alias BackendModel =
-    { message : String
-    , library : ScriptLibrary
+    { library : ScriptLibrary
     , errorCount : Dict String Int
     , errorLog : List String
+    , productions : Dict String Production
     }
 
 
@@ -45,12 +44,25 @@ type ScriptLibrary
     | Updating ClientId { notAdded : Set.Set String, added : Set.Set String, scripts : List Script }
 
 
+type alias Production =
+    { directorId : String
+    , status : ProductionStatus
+    , script : Script
+    , casting : CastingChoices
+    , namesBySessionId : Dict String String
+    }
+
+
+type alias ProductionStatus =
+    Int
+
+
 type alias FrontendMsg =
     Msg
 
 
 type ToBackend
-    = FetchScripts
+    = ClientInit
     | MakeInvitation Script
     | JoinProduction String String
     | ShareProduction CastingChoices
@@ -63,10 +75,19 @@ type BackendMsg
     | FetchScript String Time.Posix
 
 
-type ToFrontend
+type
+    ToFrontend
+    -- My approach has been to not share state on every msg,
+    -- instead having messages for everything that can change.
+    -- The case of someone recovering from disconnection motivates
+    -- a "share-everything" msg too. Maybe I switch to a share-everything
+    -- model, with many optional fields, counting on lamedera's
+    -- write compression to make it light? That will reduce
+    -- the risk of two endpoints disagreeing how to set state.
     = LoadLibrary (List Script)
     | ConsiderInvite Script ClientId
     | ActorJoined String ClientId
     | StartCueing CastingChoices
     | IncrementLineNumber
     | ReportErrors (List String)
+    | SetState { script : Script, name : String, casting : CastingChoices, lineNumber : Int }

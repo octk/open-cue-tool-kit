@@ -26,18 +26,27 @@ import Tailwind.Utilities as Tw exposing (..)
 
 
 
---  _____ _            _____ _
--- |_   _| |__   ___  | ____| |_ __ ___
---   | | | '_ \ / _ \ |  _| | | '_ ` _ \
---   | | | | | |  __/ | |___| | | | | | |
---   |_| |_| |_|\___| |_____|_|_| |_| |_|
+--  ____  _       _    __
+-- |  _ \| | __ _| |_ / _| ___  _ __ _ __ ___
+-- | |_) | |/ _` | __| |_ / _ \| '__| '_ ` _ \
+-- |  __/| | (_| | |_|  _| (_) | |  | | | | | |
+-- |_|   |_|\__,_|\__|_|  \___/|_|  |_| |_| |_|
 --
 --     _             _     _ _            _
 --    / \   _ __ ___| |__ (_) |_ ___  ___| |_ _   _ _ __ ___
 --   / _ \ | '__/ __| '_ \| | __/ _ \/ __| __| | | | '__/ _ \
 --  / ___ \| | | (__| | | | | ||  __/ (__| |_| |_| | | |  __/
 -- /_/   \_\_|  \___|_| |_|_|\__\___|\___|\__|\__,_|_|  \___|
--- The Elm Architecture describes the business of the app
+--
+-- Our design extends/abuses the Elm Architecture to generalize
+-- backends for our app. We call these "Platforms" in a nod to
+-- the Roc Language. All platforms talk to our app through the
+-- "PlatformCmd" and "PlatformResponse" types.
+-- Working platforms:
+-- Lamdera
+-- Planned platforms:
+-- Libp2p / ionic
+-- IHP (ionic?)
 
 
 type alias Model =
@@ -85,12 +94,13 @@ type PlatformResponse
     | StartCueing CastingChoices
     | IncrementLineNumber
     | ReportErrors (List String)
+    | SetState { script : Script, name : String, casting : CastingChoices, lineNumber : Int }
     | SetHost String
 
 
 type PlatformCmd
     = NoCmd
-    | FetchScripts
+    | ClientInit
     | MakeInvitation Script
     | JoinProduction String String
     | ShareProduction CastingChoices
@@ -201,6 +211,19 @@ updateFromPlatform response model =
         ReportErrors errors ->
             ( { model | intent = ReportingErrors errors }, NoCmd )
 
+        SetState { script, name, casting, lineNumber } ->
+            ( { model
+                | name = name
+                , intent =
+                    Cueing
+                        { script = script
+                        , casting = casting
+                        , lineNumber = lineNumber
+                        }
+              }
+            , NoCmd
+            )
+
 
 pickScriptHelper :
     Model
@@ -264,8 +287,8 @@ incrementLineNumberHelper model =
     let
         newIntent =
             case model.intent of
-                Cueing ({ lineNumber } as details) ->
-                    Cueing { details | lineNumber = lineNumber + 1 }
+                Cueing details ->
+                    Cueing { details | lineNumber = details.lineNumber + 1 }
 
                 _ ->
                     model.intent
@@ -1746,7 +1769,6 @@ intentionTestCases =
             , { actors = [ "Jorge" ], parts = [ "Phylis" ] }
             , { actors = [ "Jimmy Eat Wales" ], parts = [ "Angela" ] }
             ]
-        , invitationLink = "I always just say I'm from queens"
         , script = Script "The Office" []
         , manualCasting = Just (PartFor "Dwight")
         }

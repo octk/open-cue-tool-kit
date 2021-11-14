@@ -28,8 +28,8 @@ platformCmdTransform platformCmd =
         Client.NoCmd ->
             Cmd.none
 
-        Client.FetchScripts ->
-            Lamdera.sendToBackend Types.FetchScripts
+        Client.ClientInit ->
+            Lamdera.sendToBackend Types.ClientInit
 
         Client.MakeInvitation script ->
             Lamdera.sendToBackend (Types.MakeInvitation script)
@@ -67,6 +67,9 @@ updateFromBackend msg model =
 
         Types.ReportErrors errors ->
             ( model, relayPlatformResponse (Client.ReportErrors errors) )
+
+        Types.SetState state ->
+            ( model, relayPlatformResponse (Client.SetState state) )
 
 
 subscriptions m =
@@ -131,11 +134,10 @@ app =
 init : Url.Url -> Nav.Key -> ( Types.FrontendModel, Cmd Msg )
 init url key =
     ( { key = key
-      , message = ""
       , cueCannonModel = Client.initialModel
       }
     , Cmd.batch
-        [ Lamdera.sendToBackend Types.FetchScripts
+        [ Lamdera.sendToBackend Types.ClientInit
         , relayPlatformResponse (Client.SetHost Env.host)
         ]
     )

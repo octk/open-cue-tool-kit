@@ -42,7 +42,11 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { message = "Hello!", library = EmptyLibrary, errorCount = Dict.empty, errorLog = [] }
+    ( { library = EmptyLibrary
+      , errorCount = Dict.empty
+      , errorLog = []
+      , productions = Dict.empty
+      }
     , Cmd.none
     )
 
@@ -60,18 +64,18 @@ updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd
 updateFromFrontend sessionId clientId msg model =
     case msg of
         -- App
-        JoinProduction name id ->
-            joinProductionHelper model clientId name id
+        ClientInit ->
+            clientInitHelper sessionId model
 
-        FetchScripts ->
-            fetchScriptHelper clientId model
+        JoinProduction name id ->
+            joinProductionHelper model sessionId name id
 
         -- Director
         MakeInvitation script ->
-            makeInvitationHelper clientId model script
+            shareScript sessionId model script
 
         ShareProduction casting ->
-            shareProductionHelper model casting
+            shareCasting model casting
 
         AdvanceCue ->
             ( model, Lamdera.broadcast IncrementLineNumber )
@@ -80,8 +84,8 @@ updateFromFrontend sessionId clientId msg model =
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
-        GotScriptList clientId response ->
-            gotScriptListHelper model clientId response
+        GotScriptList sessionId response ->
+            gotScriptListHelper model sessionId response
 
         FetchScript name _ ->
             ( model, fetchScript name )
@@ -104,50 +108,115 @@ update msg model =
 --       |_|                                      |_|
 
 
-joinProductionHelper model actorClientId name directorClientId =
-    ( model
-    , Lamdera.sendToFrontend directorClientId (ActorJoined name actorClientId)
+joinProductionHelper ({ productions } as model) actorSessionId name directorSessionId =
+    let
+        setName _ production =
+            { production
+                | namesBySessionId =
+                    Dict.insert actorSessionId name production.namesBySessionId
+            }
+
+        newProductions =
+            Dict.map setName productions
+    in
+    ( { model | productions = newProductions }
+    , Lamdera.sendToFrontend directorSessionId (ActorJoined name actorSessionId)
     )
 
 
-fetchScriptHelper clientId model =
+clientInitHelper sessionId model =
+    let
+        fetchLibrary =
+            fetchLibraryHelper sessionId model
+    in
+    case Dict.toList model.productions of
+        -- TODO Enable multiple productions instead of overwriting one
+        ( _, production ) :: [] ->
+            case Dict.get sessionId production.namesBySessionId of
+                Just name ->
+                    ( model
+                    , Cmd.batch
+                        [ fetchLibrary
+                        , Lamdera.sendToFrontend sessionId
+                            (SetState
+                                { script = production.script
+                                , name = name
+                                , casting = production.casting
+                                , lineNumber = production.status
+                                }
+                            )
+                        ]
+                    )
+
+                Nothing ->
+                    ( model
+                    , Cmd.batch
+                        [ fetchLibrary
+                        , Lamdera.sendToFrontend sessionId (ConsiderInvite production.script production.directorId)
+                        ]
+                    )
+
+        _ ->
+            ( model, fetchLibrary )
+
+
+fetchLibraryHelper sessionId model =
     case model.library of
         EmptyLibrary ->
             let
                 scriptIndexDecoder =
                     Json.Decode.list Json.Decode.string
             in
-            ( model
-            , Http.get
+            Http.get
                 { url = Env.s3Url ++ "play_list.json"
-                , expect = Http.expectJson (GotScriptList clientId) scriptIndexDecoder
+                , expect = Http.expectJson (GotScriptList sessionId) scriptIndexDecoder
                 }
-            )
 
         Library lib ->
-            ( model, Lamdera.sendToFrontend clientId (LoadLibrary lib.scripts) )
+            Lamdera.sendToFrontend sessionId (LoadLibrary lib.scripts)
 
         Updating _ _ ->
-            ( model, Cmd.none )
+            Cmd.none
 
 
-makeInvitationHelper directorClientId model script =
+shareScript directorSessionId model script =
     -- For now, everyone joins a production if you share it.
-    ( model
-    , Lamdera.broadcast (ConsiderInvite script directorClientId)
+    -- There is only one production, overwritten by any director.
+    let
+        productions =
+            Dict.fromList
+                [ ( directorSessionId
+                  , { directorId = directorSessionId
+                    , status = 0
+                    , script = script
+                    , casting = []
+                    , namesBySessionId = Dict.empty
+                    }
+                  )
+                ]
+    in
+    ( { model | productions = productions }
+    , Lamdera.broadcast (ConsiderInvite script directorSessionId)
     )
 
 
-shareProductionHelper model casting =
-    ( model, Lamdera.broadcast (StartCueing casting) )
+shareCasting ({ productions } as model) casting =
+    let
+        setCast _ production =
+            { production | casting = casting }
+
+        newProductions =
+            Dict.map setCast productions
+    in
+    ( { model | productions = newProductions }, Lamdera.broadcast (StartCueing casting) )
 
 
-gotScriptListHelper model clientId response =
+gotScriptListHelper model sessionId response =
     case response of
         Ok list ->
             ( { model
                 | library =
-                    Updating clientId
+                    Updating sessionId
                         { added = Set.empty
                         , notAdded = Set.fromList list
                         , scripts = []
@@ -163,7 +232,7 @@ gotScriptListHelper model clientId response =
 fetchedScriptHelper : Model -> String -> Script -> ( Model, Cmd BackendMsg )
 fetchedScriptHelper model name script =
     case model.library of
-        Updating clientId { added, notAdded, scripts } ->
+        Updating sessionId { added, notAdded, scripts } ->
             let
                 progress =
                     { added = Set.insert name added
@@ -179,10 +248,10 @@ fetchedScriptHelper model name script =
                             }
 
                     else
-                        Updating clientId progress
+                        Updating sessionId progress
             in
             ( { model | library = newLibrary }
-            , Lamdera.sendToFrontend clientId (LoadLibrary progress.scripts)
+            , Lamdera.sendToFrontend sessionId (LoadLibrary progress.scripts)
             )
 
         _ ->
@@ -246,6 +315,17 @@ errorToString err =
 
         Http.BadBody s ->
             "Elm.HTTP bad body error: " ++ s
+
+
+advanceCueHelper ({ productions } as model) =
+    let
+        setLineNumber _ production =
+            { production | status = production.status + 1 }
+
+        newProductions =
+            Dict.map setLineNumber productions
+    in
+    ( { model | productions = newProductions }, Lamdera.broadcast IncrementLineNumber )
 
 
 
