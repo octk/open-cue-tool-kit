@@ -66,6 +66,7 @@ updateFromFrontend sessionId clientId msg model =
         -- App
         ClientInit ->
             clientInitHelper sessionId model
+                |> fetchLibraryHelper sessionId
 
         JoinProduction name id ->
             joinProductionHelper model sessionId name id
@@ -88,7 +89,7 @@ update msg model =
             gotScriptListHelper model sessionId response
 
         FetchScript name _ ->
-            ( model, fetchScript name )
+            ( { model | errorLog = ("Fetching script " ++ name) :: model.errorLog }, fetchScript name )
 
         FetchedScript name response ->
             case response of
@@ -125,58 +126,69 @@ joinProductionHelper ({ productions } as model) actorSessionId name directorSess
 
 
 clientInitHelper sessionId model =
-    let
-        fetchLibrary =
-            fetchLibraryHelper sessionId model
-    in
     case Dict.toList model.productions of
         -- TODO Enable multiple productions instead of overwriting one
         ( _, production ) :: [] ->
             case Dict.get sessionId production.namesBySessionId of
                 Just name ->
                     ( model
-                    , Cmd.batch
-                        [ fetchLibrary
-                        , Lamdera.sendToFrontend sessionId
-                            (SetState
-                                { script = production.script
-                                , name = name
-                                , casting = production.casting
-                                , lineNumber = production.status
-                                }
-                            )
-                        ]
+                    , Lamdera.sendToFrontend sessionId
+                        (SetState
+                            { script = production.script
+                            , name = name
+                            , casting = production.casting
+                            , lineNumber = production.status
+                            }
+                        )
                     )
 
                 Nothing ->
-                    ( model
-                    , Cmd.batch
-                        [ fetchLibrary
+                    if sessionId == production.directorId then
+                        case model.library of
+                            Library lib ->
+                                -- If director rejoins, let them browse
+                                ( model, Lamdera.sendToFrontend sessionId (LoadLibrary lib.scripts) )
+
+                            -- Nonsense. Director reloads but we have no scripts
+                            _ ->
+                                ( model, Cmd.none )
+
+                    else
+                        -- If actor joins while casting, invite them
+                        ( model
                         , Lamdera.sendToFrontend sessionId (ConsiderInvite production.script production.directorId)
-                        ]
-                    )
+                        )
 
         _ ->
-            ( model, fetchLibrary )
+            ( model, Cmd.none )
 
 
-fetchLibraryHelper sessionId model =
+fetchLibraryHelper sessionId ( model, cmd ) =
     case model.library of
         EmptyLibrary ->
             let
+                newModel =
+                    { model | errorLog = "Library is empty. Attempting to fetch plays..." :: model.errorLog }
+
                 scriptIndexDecoder =
                     Json.Decode.list Json.Decode.string
             in
-            Http.get
-                { url = Env.s3Url ++ "play_list.json"
-                , expect = Http.expectJson (GotScriptList sessionId) scriptIndexDecoder
-                }
+            ( newModel
+            , Cmd.batch
+                [ cmd
+                , Http.get
+                    { url = Env.s3Url ++ "play_list.json"
+                    , expect = Http.expectJson (GotScriptList sessionId) scriptIndexDecoder
+                    }
+                , Lamdera.broadcast (ReportErrors newModel.errorLog)
+                ]
+            )
 
         Library lib ->
-            Lamdera.sendToFrontend sessionId (LoadLibrary lib.scripts)
+            ( model, Cmd.batch [ cmd, Lamdera.sendToFrontend sessionId (LoadLibrary lib.scripts) ] )
 
         Updating _ _ ->
-            Cmd.none
+            ( model, cmd )
 
 
 shareScript directorSessionId model script =
@@ -226,7 +238,16 @@ gotScriptListHelper model sessionId response =
             )
 
         Err e ->
-            ( model, Cmd.none )
+            let
+                formatError =
+                    "When fetching play_list.json, encountered " ++ errorToString e ++ "\n"
+
+                newModel =
+                    { model | errorLog = formatError :: model.errorLog }
+            in
+            ( newModel
+            , Lamdera.broadcast (ReportErrors newModel.errorLog)
+            )
 
 
 fetchedScriptHelper : Model -> String -> Script -> ( Model, Cmd BackendMsg )
@@ -285,7 +306,7 @@ errorHelper model name e =
     in
     if errors > 5 then
         -- We stop asking for a script after 5 failures
-        ( newModel
+        ( { newModel | library = EmptyLibrary }
         , Lamdera.broadcast (ReportErrors newModel.errorLog)
         )
 
