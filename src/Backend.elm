@@ -185,10 +185,21 @@ fetchLibraryHelper sessionId ( model, cmd ) =
             )
 
         Library lib ->
-            ( model, Cmd.batch [ cmd, Lamdera.sendToFrontend sessionId (LoadLibrary lib.scripts) ] )
+            ( model
+            , Cmd.batch
+                [ cmd
+                , Lamdera.sendToFrontend sessionId (LoadLibrary lib.scripts)
+                , Lamdera.broadcast (ReportErrors model.errorLog)
+                ]
+            )
 
         Updating _ _ ->
-            ( model, cmd )
+            ( model
+            , Cmd.batch
+                [ cmd
+                , Lamdera.broadcast (ReportErrors model.errorLog)
+                ]
+            )
 
 
 shareScript directorSessionId model script =
