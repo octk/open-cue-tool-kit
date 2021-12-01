@@ -315,8 +315,9 @@ errorHelper model name e =
                 , errorCount = Dict.update name incrementError model.errorCount
             }
     in
-    if errors > 5 then
-        -- We stop asking for a script after 5 failures
+    if errors >= 1 then
+        ---- We stop asking for a script after 5 failures
+        -- Change to 1 since overloading
         ( { newModel | library = EmptyLibrary }
         , Lamdera.broadcast (ReportErrors newModel.errorLog)
         )
