@@ -159,7 +159,7 @@ update msg model =
                         Just i ->
                             modBy l (i + 1)
             in
-            ( { model | selectedIntentionTestCase = Just newIndex }, NoCmd )
+            ( { model | selectedIntentionTestCase = Just newIndex, name = "" }, NoCmd )
 
 
 updateFromPlatform : PlatformResponse -> Model -> ( Model, PlatformCmd )
@@ -465,35 +465,6 @@ doNothing =
 
 
 appTemplate model =
-    let
-        title =
-            case model.intent of
-                Cueing cueDetails ->
-                    case makeCueingAction model.name cueDetails of
-                        ShowOver ->
-                            "The End"
-
-                        Listening _ ->
-                            "Listening"
-
-                        Speaking _ ->
-                            "Speaking"
-
-                Casting { script } ->
-                    script.title
-
-                Browsing scripts ->
-                    "Select a script"
-
-                Accepting _ ->
-                    "Joining production"
-
-                Loading ->
-                    ""
-
-                ReportingErrors _ ->
-                    "Reporting Errors"
-    in
     div
         []
         [ Css.Global.global globalStyles
@@ -504,8 +475,19 @@ appTemplate model =
                 , bg_white
                 , flex
                 , flex_col
-                , justify_end
+                , justify_start
+
+                -- App wide PWA styling
+                , select_none
+                , fixed
+                , overflow_hidden
+                , overscroll_y_none
                 ]
+
+            -- iOS specific
+            -- https://blog.opendigerati.com/the-eccentric-ways-of-ios-safari-with-the-keyboard-b5aa3f34228d
+            , Attr.style "-webkit-tab-highlight-color" "rgba(255, 0, 0, 0.4)"
+            , Attr.style "touch-action" "none"
             ]
             [ nav [ css [ bg_white, border_b, border_gray_200 ] ]
                 [ div
@@ -517,21 +499,7 @@ appTemplate model =
                         , Bp.sm [ px_6 ]
                         ]
                     ]
-                    [ div [ css [ flex, justify_between, h_16 ] ]
-                        [ tMenu title
-                        , div
-                            [ css
-                                [ hidden, Bp.sm [ ml_6, flex, items_center ] ]
-                            ]
-                            [ case model.selectedIntentionTestCase of
-                                Just _ ->
-                                    intentionTestCaseSelector
-
-                                _ ->
-                                    emptyTemplate
-                            ]
-                        ]
-                    ]
+                    [ div [ css [ flex, justify_between, h_16 ] ] [ tMenu model ] ]
                 ]
             , div [ css [ h_full ] ]
                 [ case model.intent of
@@ -1114,10 +1082,10 @@ acceptingPage { title } director joining name =
                 , mx_auto
                 , flex
                 , flex_col
-                , h_full
                 , Bp.lg [ px_8 ]
                 , Bp.sm [ px_6 ]
                 ]
+            , appHeight
             ]
             [ header []
                 [ div
@@ -1135,6 +1103,7 @@ acceptingPage { title } director joining name =
                             , font_bold
                             , leading_tight
                             , text_gray_900
+                            , my_2
                             ]
                         ]
                         [ text
@@ -1186,7 +1155,9 @@ acceptingPage { title } director joining name =
                         [ relative
                         , w_full
                         , flex
+                        , flex_col
                         , justify_center
+                        , items_center
                         , border
                         , border_transparent
                         , text_sm
@@ -1194,6 +1165,7 @@ acceptingPage { title } director joining name =
                         , rounded_md
                         , text_white
                         , bg_indigo_600
+                        , h_12
                         , Css.focus
                             [ outline_none
                             , ring_2
@@ -1226,13 +1198,14 @@ acceptingPage { title } director joining name =
 
 cueingPage : CueingAction -> Html Msg
 cueingPage cueingAction =
-    div [ css [ py_10, h_full ] ]
+    div [ css [ py_6, h_full ] ]
         [ header []
             [ div
                 [ css
                     [ max_w_7xl
                     , mx_auto
                     , px_4
+                    , pb_4
                     , Bp.lg [ px_8 ]
                     , Bp.sm [ px_6 ]
                     ]
@@ -1257,7 +1230,9 @@ cueingPage cueingAction =
                     ]
                 ]
             ]
-        , main_ [ css [ h_full ] ]
+        , main_
+            [ Attr.style "height" "calc(100% - 200px)"
+            ]
             [ case cueingAction of
                 ShowOver ->
                     text "That's all folks!"
@@ -1301,12 +1276,19 @@ cueingPage cueingAction =
                             , h_full
                             ]
                         ]
-                        [ div [ css [ px_4, py_8, Bp.sm [ px_0 ] ] ]
-                            [ div [ css [ whitespace_pre_wrap ] ]
-                                [ text line ]
+                        [ div
+                            [ css
+                                [ min_h_0
+                                , overflow_y_scroll
+                                , px_4
+                                , Bp.sm [ px_0 ]
+                                , whitespace_pre_wrap
+                                ]
+                            , Attr.style "touch-action" "pan-up"
                             ]
+                            [ text line ]
                         , div
-                            [ css [ mt_auto, mb_8 ]
+                            [ css [ mt_auto, mb_12, mt_6 ]
                             ]
                             [ button
                                 [ Attr.type_ "submit"
@@ -1314,6 +1296,8 @@ cueingPage cueingAction =
                                     [ relative
                                     , w_full
                                     , flex
+                                    , flex_col
+                                    , items_center
                                     , justify_center
                                     , px_4
                                     , border
@@ -1323,6 +1307,7 @@ cueingPage cueingAction =
                                     , rounded_md
                                     , text_white
                                     , bg_indigo_600
+                                    , h_10
                                     , Css.focus
                                         [ outline_none
                                         , ring_2
@@ -1389,13 +1374,13 @@ castingModal currentCasting newChoice =
         , Attr.attribute "aria-labelledby" "modal-title"
         , Attr.attribute "role" "dialog"
         , Attr.attribute "aria-modal" "true"
+        , Attr.style "touch-action" "none"
         ]
         [ div
             [ css
                 [ Tw.flex
                 , Tw.items_end
                 , Tw.justify_center
-                , Tw.min_h_screen
                 , Tw.pt_4
                 , Tw.px_4
                 , Tw.pb_20
@@ -1405,6 +1390,7 @@ castingModal currentCasting newChoice =
                     , Tw.p_0
                     ]
                 ]
+            , appHeight
             ]
             [ {-
                  Background overlay, show/hide based on modal state.
@@ -1621,8 +1607,37 @@ castingModal currentCasting newChoice =
 -- Page Helpers
 
 
-tMenu : String -> Html msg
-tMenu title =
+tMenu : Model -> Html Msg
+tMenu model =
+    let
+        title =
+            case model.intent of
+                Cueing cueDetails ->
+                    case makeCueingAction model.name cueDetails of
+                        ShowOver ->
+                            "The End"
+
+                        Listening _ ->
+                            "Listening"
+
+                        Speaking _ ->
+                            "Speaking"
+
+                Casting { script } ->
+                    script.title
+
+                Browsing scripts ->
+                    "Select a script"
+
+                Accepting _ ->
+                    "Joining production"
+
+                Loading ->
+                    ""
+
+                ReportingErrors _ ->
+                    "Reporting Errors"
+    in
     div
         [ css [ flex ] ]
         [ div [ css [ flex_shrink_0, flex, items_center ] ]
@@ -1630,6 +1645,13 @@ tMenu title =
                 [ css [ block, h_8, w_auto ]
                 , Attr.src "https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
                 , Attr.alt "Logo"
+                , case model.selectedIntentionTestCase of
+                    Just _ ->
+                        onClick AdvanceIntentionTestCase
+
+                    Nothing ->
+                        -- none
+                        Attr.attribute "" ""
                 ]
                 []
             ]
@@ -1654,92 +1676,10 @@ emptyTemplate =
     Html.text ""
 
 
-intentionTestCaseSelector =
-    div
-        [ css
-            [ Tw.absolute
-            , Tw.z_50
-            , Tw.neg_mr_2
-            , Tw.flex
-            , Tw.items_center
-            ]
-        ]
-        [ {- Mobile menu button -}
-          button
-            [ Attr.type_ "button"
-            , onClick AdvanceIntentionTestCase
-            , css
-                [ Tw.bg_white
-                , Tw.inline_flex
-                , Tw.items_center
-                , Tw.justify_center
-                , Tw.p_2
-                , Tw.rounded_md
-                , Tw.text_gray_400
-                , Css.focus
-                    [ Tw.outline_none
-                    , Tw.ring_2
-                    , Tw.ring_offset_2
-                    , Tw.ring_indigo_500
-                    ]
-                , Css.hover
-                    [ Tw.text_gray_500
-                    , Tw.bg_gray_100
-                    ]
-                ]
-            , Attr.attribute "aria-controls" "mobile-menu"
-            , Attr.attribute "aria-expanded" "false"
-            ]
-            [ {-
-                 Heroicon name: outline/menu
-
-                 Menu open: "hidden", Menu closed: "block"
-              -}
-              svg
-                [ SvgAttr.css
-                    [ Tw.block
-                    , Tw.h_6
-                    , Tw.w_6
-                    ]
-                , SvgAttr.fill "none"
-                , SvgAttr.viewBox "0 0 24 24"
-                , SvgAttr.stroke "currentColor"
-                , Attr.attribute "aria-hidden" "true"
-                ]
-                [ path
-                    [ SvgAttr.strokeLinecap "round"
-                    , SvgAttr.strokeLinejoin "round"
-                    , SvgAttr.strokeWidth "2"
-                    , SvgAttr.d "M4 6h16M4 12h16M4 18h16"
-                    ]
-                    []
-                ]
-            , {-
-                 Heroicon name: outline/x
-
-                 Menu open: "block", Menu closed: "hidden"
-              -}
-              svg
-                [ SvgAttr.css
-                    [ Tw.hidden
-                    , Tw.h_6
-                    , Tw.w_6
-                    ]
-                , SvgAttr.fill "none"
-                , SvgAttr.viewBox "0 0 24 24"
-                , SvgAttr.stroke "currentColor"
-                , Attr.attribute "aria-hidden" "true"
-                ]
-                [ path
-                    [ SvgAttr.strokeLinecap "round"
-                    , SvgAttr.strokeLinejoin "round"
-                    , SvgAttr.strokeWidth "2"
-                    , SvgAttr.d "M6 18L18 6M6 6l12 12"
-                    ]
-                    []
-                ]
-            ]
-        ]
+appHeight =
+    -- ios viewport tricky
+    -- https://lukechannings.com/blog/2021-06-09-does-safari-15-fix-the-vh-bug/
+    Attr.style "height" "calc(100% - 100px)"
 
 
 
@@ -1782,7 +1722,7 @@ intentionTestCases =
                     { title = "Hamlet"
                     , lines =
                         [ { speaker = "Hamlet"
-                          , line = "As happy prologues to the swelling act\nOf the imperial theme.—I thank you, gentlemen.\n[Aside] This supernatural soliciting\nCannot be ill, cannot be good: if ill,\nWhy hath it given me earnest of success,\nCommencing in a truth? I am thane of Cawdor:\nIf good, why do I yield to that suggestion\nWhose horrid image doth unfix my hair\nAnd make my seated heart knock at my ribs,\nAgainst the use of nature? Present fears\nAre less than horrible imaginings:\nMy thought, whose murder yet is but fantastical,\nShakes so my single state of man that function\nIs smother'd in surmise, and nothing is\nBut what is not. "
+                          , line = "As happy prologues to the swelling act\nOf the imperial theme.—I thank you, gentlemen.\n[Aside] This supernatural soliciting\nCannot be ill, cannot be good: if ill,\nWhy hath it given me earnest of success,\nCommencing in a truth? I am thane of Cawdor:\nIf good, why do I yield to that suggestion\nWhose horrid image doth unfix my hair\nAnd make my seated heart knock at my ribs,\nAgainst the use of nature? Present fears\nAre less than horrible imaginings:\nMy thought, whose murder yet is but fantastical,\nShakes so my single state of man that function\nIs smother'd in surmise, and nothing is\nBut what is not. \nShakes so my single state of man that function\nIs smother'd in surmise, and nothing is\nBut what is not. \nShakes so my single state of man that function\nIs smother'd in surmise, and nothing is\nBut what is not. "
                           , title = ""
                           , part = ""
                           }
