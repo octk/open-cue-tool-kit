@@ -1642,17 +1642,18 @@ tMenu model =
         [ css [ flex ] ]
         [ div [ css [ flex_shrink_0, flex, items_center ] ]
             [ img
-                [ css [ block, h_8, w_auto ]
-                , Attr.src "https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
-                , Attr.alt "Logo"
-                , case model.selectedIntentionTestCase of
-                    Just _ ->
-                        onClick AdvanceIntentionTestCase
+                ([ css [ block, h_8, w_auto ]
+                 , Attr.src "https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
+                 , Attr.alt "Logo"
+                 ]
+                    ++ (case model.selectedIntentionTestCase of
+                            Just _ ->
+                                [ onClick AdvanceIntentionTestCase ]
 
-                    Nothing ->
-                        -- none
-                        Attr.attribute "" ""
-                ]
+                            Nothing ->
+                                []
+                       )
+                )
                 []
             ]
         , div [ css [ neg_my_px, ml_6, flex, space_x_8 ] ]
