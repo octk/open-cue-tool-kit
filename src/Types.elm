@@ -41,7 +41,13 @@ type alias Script =
 type ScriptLibrary
     = EmptyLibrary
     | Library { titles : List String, scripts : List Script }
-    | Updating ClientId { notAdded : Set.Set String, added : Set.Set String, scripts : List Script }
+    | Updating
+        ClientId
+        { notAdded : Set.Set String
+        , added : Set.Set String
+        , scripts : List Script
+        , fetching : Bool
+        }
 
 
 type alias Production =

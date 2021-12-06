@@ -89,7 +89,18 @@ update msg model =
             gotScriptListHelper model sessionId response
 
         FetchScript name _ ->
-            ( { model | errorLog = ("Fetching script " ++ name) :: model.errorLog }, fetchScript name )
+            case model.library of
+                Updating id progress ->
+                    ( { model
+                        | errorLog = ("Fetching script " ++ name) :: model.errorLog
+                        , library = Updating id { progress | fetching = True }
+                      }
+                    , fetchScript name
+                    )
+
+                _ ->
+                    -- Shouldn't happen
+                    ( model, Cmd.none )
 
         FetchedScript name response ->
             case response of
@@ -189,7 +200,6 @@ fetchLibraryHelper sessionId ( model, cmd ) =
             , Cmd.batch
                 [ cmd
                 , Lamdera.sendToFrontend sessionId (LoadLibrary lib.scripts)
-                , Lamdera.broadcast (ReportErrors model.errorLog)
                 ]
             )
 
@@ -243,6 +253,7 @@ gotScriptListHelper model sessionId response =
                         { added = Set.empty
                         , notAdded = Set.fromList list
                         , scripts = []
+                        , fetching = False
                         }
               }
             , Cmd.none
@@ -270,19 +281,17 @@ fetchedScriptHelper model name script =
                     { added = Set.insert name added
                     , notAdded = Set.remove name notAdded
                     , scripts = scripts ++ [ script ]
+                    , fetching = False
                     }
-
-                newLibrary =
-                    if Set.size progress.notAdded == 0 then
-                        Library
-                            { titles = Set.toList progress.added
-                            , scripts = progress.scripts
-                            }
-
-                    else
-                        Updating sessionId progress
             in
-            ( { model | library = newLibrary }
+            ( if Set.size progress.notAdded == 0 then
+                { model
+                    | errorLog = "Finished loading library" :: model.errorLog
+                    , library = Library { titles = Set.toList progress.added, scripts = progress.scripts }
+                }
+
+              else
+                { model | library = Updating sessionId progress }
             , Lamdera.sendToFrontend sessionId (LoadLibrary progress.scripts)
             )
 
@@ -399,10 +408,14 @@ type alias ScriptLine =
 subscriptions : Model -> Sub BackendMsg
 subscriptions model =
     case model.library of
-        Updating _ { added, notAdded } ->
+        Updating _ { added, notAdded, fetching } ->
             case List.head (Set.toList notAdded) of
                 Just name ->
-                    Time.every 300 (FetchScript name)
+                    if fetching then
+                        Sub.none
+
+                    else
+                        Time.every 300 (FetchScript name)
 
                 Nothing ->
                     Sub.none
