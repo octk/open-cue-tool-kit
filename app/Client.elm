@@ -23,6 +23,7 @@ import Svg.Styled as Svg exposing (path, svg)
 import Svg.Styled.Attributes as SvgAttr
 import Tailwind.Breakpoints as Bp
 import Tailwind.Utilities as Tw exposing (..)
+import TestScript exposing (testScript)
 
 
 
@@ -1749,6 +1750,12 @@ intentionTestCases =
                 { script = s
                 , casting = castByLineFrequency s.lines [ "Jeff" ] -- Listening
                 , lineNumber = 0
+                }
+            , Casting
+                -- This tests the casting spacing for many characters
+                { casting = makeEmptyCast testScript [ "Cory", "Brooke", "Michael" ]
+                , script = { title = "", lines = testScript }
+                , manualCasting = Nothing
                 }
             ]
            )
