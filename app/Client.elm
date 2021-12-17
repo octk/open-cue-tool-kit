@@ -596,26 +596,28 @@ reportingErrorsPage errors =
 
 
 browsingPage scripts =
-    ul
-        [ Attr.attribute "role" "list", css [ Tw.divide_y, Tw.divide_gray_200 ] ]
-        (List.map
-            (\({ title } as script) ->
-                li [ css [ Tw.py_4, Tw.flex, Tw.truncate ] ]
-                    [ div [ css [ Tw.ml_3 ] ]
-                        [ p
-                            [ css
-                                [ Tw.text_sm
-                                , Tw.font_medium
-                                , Tw.text_gray_900
+    div [ css [ overflow_y_scroll ], appHeight ]
+        [ ul
+            [ Attr.attribute "role" "list", css [ Tw.divide_y, Tw.divide_gray_200 ] ]
+            (List.map
+                (\({ title } as script) ->
+                    li [ css [ Tw.py_4, Tw.flex, Tw.truncate ] ]
+                        [ div [ css [ Tw.ml_3 ] ]
+                            [ p
+                                [ css
+                                    [ Tw.text_sm
+                                    , Tw.font_medium
+                                    , Tw.text_gray_900
+                                    ]
+                                , Events.onClick (PickScript script)
                                 ]
-                            , Events.onClick (PickScript script)
+                                [ text title ]
                             ]
-                            [ text title ]
                         ]
-                    ]
+                )
+                scripts
             )
-            scripts
-        )
+        ]
 
 
 alreadyCastPartsAndActors autocast casting =
@@ -1757,5 +1759,8 @@ intentionTestCases =
                 , script = { title = "", lines = testScript }
                 , manualCasting = Nothing
                 }
+            , Browsing
+                --This tests selecting from a long list of scripts
+                [ s, s, s, s, s, s, s, s, s, s, s, s, s, s, s, s, s, s, s, s, s ]
             ]
            )
