@@ -954,11 +954,11 @@ castingPage { casting, manualCasting } autocast host =
             [ bg_gray_50
             , shadow
             , overflow_hidden
-            , h_full
             , Bp.sm
                 [ rounded_md
                 ]
             ]
+        , appHeight
         ]
         [ div [ css [ flex, flex_col, h_full ] ]
             [ div []
@@ -968,7 +968,7 @@ castingPage { casting, manualCasting } autocast host =
                         , items_center
                         , justify_center
                         , bg_gray_50
-                        , py_12
+                        , py_4
                         , px_4
                         , Bp.lg [ px_8 ]
                         , Bp.sm [ px_6 ]
@@ -980,7 +980,7 @@ castingPage { casting, manualCasting } autocast host =
                                 Just hostUrl ->
                                     [ QRCode.fromString hostUrl
                                         |> Result.map
-                                            (QRCode.toSvg [ SvgA.width "150px", SvgA.height "150px" ]
+                                            (QRCode.toSvg [ SvgA.width "200px", SvgA.height "200px" ]
                                                 >> fromUnstyled
                                             )
                                         |> Result.withDefault (text "Error while encoding to QRCode.")
@@ -1038,7 +1038,14 @@ castingPage { casting, manualCasting } autocast host =
                             ]
                        )
                 )
-            , div [ css [ mb_8, bg_gray_50, mt_auto ] ]
+            , div
+                [ css
+                    [ bg_gray_50
+                    , mt_auto
+                    , mb_24
+                    , Bp.md [ mb_0 ]
+                    ]
+                ]
                 (if showIsCast then
                     [ button
                         [ Attr.type_ "submit"
