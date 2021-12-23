@@ -79,7 +79,14 @@ updateFromFrontend sessionId clientId msg model =
             shareCasting model casting
 
         AdvanceCue ->
-            ( model, Lamdera.broadcast IncrementLineNumber )
+            let
+                setLineNumber _ production =
+                    { production | status = production.status + 1 }
+
+                newProductions =
+                    Dict.map setLineNumber model.productions
+            in
+            ( { model | productions = newProductions }, Lamdera.broadcast IncrementLineNumber )
 
 
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
@@ -357,17 +364,6 @@ errorToString err =
 
         Http.BadBody s ->
             "Elm.HTTP bad body error: " ++ s
-
-
-advanceCueHelper ({ productions } as model) =
-    let
-        setLineNumber _ production =
-            { production | status = production.status + 1 }
-
-        newProductions =
-            Dict.map setLineNumber productions
-    in
-    ( { model | productions = newProductions }, Lamdera.broadcast IncrementLineNumber )
 
 
 
