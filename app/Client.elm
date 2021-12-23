@@ -406,7 +406,7 @@ makeCueingAction name { script, casting, lineNumber } =
 
         nextParts =
             List.map .speaker script.lines
-                |> List.filter (\speaker -> List.notMember speaker myParts)
+                |> List.filter (\speaker -> List.member speaker myParts)
                 |> List.unique
     in
     case currentLine of
