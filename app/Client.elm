@@ -989,34 +989,35 @@ castingPage { casting, manualCasting } autocast host =
                                 Nothing ->
                                     []
                             )
-                        , div []
-                            [ button
-                                [ Attr.type_ "submit"
-                                , css
-                                    [ relative
-                                    , w_full
-                                    , flex
-                                    , justify_center
-                                    , py_2
-                                    , px_4
-                                    , border
-                                    , border_transparent
-                                    , text_sm
-                                    , font_medium
-                                    , rounded_md
-                                    , text_white
-                                    , bg_indigo_600
-                                    , Css.focus
-                                        [ outline_none
-                                        , ring_2
-                                        , ring_offset_2
-                                        , ring_indigo_500
-                                        ]
-                                    , Css.hover [ bg_indigo_700 ]
-                                    ]
-                                ]
-                                [ text "Copy invitation link" ]
-                            ]
+
+                        -- , div []
+                        --     [ button
+                        --         [ Attr.type_ "submit"
+                        --         , css
+                        --             [ relative
+                        --             , w_full
+                        --             , flex
+                        --             , justify_center
+                        --             , py_2
+                        --             , px_4
+                        --             , border
+                        --             , border_transparent
+                        --             , text_sm
+                        --             , font_medium
+                        --             , rounded_md
+                        --             , text_white
+                        --             , bg_indigo_600
+                        --             , Css.focus
+                        --                 [ outline_none
+                        --                 , ring_2
+                        --                 , ring_offset_2
+                        --                 , ring_indigo_500
+                        --                 ]
+                        --             , Css.hover [ bg_indigo_700 ]
+                        --             ]
+                        --         ]
+                        --         [ text "Copy invitation link" ]
+                        --     ]
                         ]
                     ]
                 ]
