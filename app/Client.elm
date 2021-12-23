@@ -17,6 +17,12 @@ import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes as Attr exposing (css)
 import Html.Styled.Events as Events exposing (onClick)
 import List.Extra as List
+import Loading
+    exposing
+        ( LoaderType(..)
+        , defaultConfig
+        , render
+        )
 import QRCode
 import Svg.Attributes as SvgA
 import Svg.Styled as Svg exposing (path, svg)
@@ -558,9 +564,11 @@ loadingPage =
                         , Tw.text_indigo_600
                         , Tw.tracking_wide
                         , Tw.uppercase
+                        , Tw.py_6
                         ]
                     ]
                     [ text "Loading" ]
+                , Html.fromUnstyled <| Loading.render Spinner { defaultConfig | color = "#4F46E5" } Loading.On
                 ]
             ]
         ]
