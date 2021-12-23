@@ -1238,7 +1238,7 @@ cueingPage cueingAction =
             ]
             [ case cueingAction of
                 ShowOver ->
-                    text "That's all folks!"
+                    text ""
 
                 Listening { nextParts } ->
                     div
@@ -1618,7 +1618,7 @@ tMenu model =
                 Cueing cueDetails ->
                     case makeCueingAction model.name cueDetails of
                         ShowOver ->
-                            "The End"
+                            "That's all folks!"
 
                         Listening _ ->
                             "Listening"
