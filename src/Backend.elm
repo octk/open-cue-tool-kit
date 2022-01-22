@@ -1,5 +1,6 @@
 module Backend exposing (..)
 
+import Casting exposing (CastingChoices)
 import Dict
 import Env
 import Html
@@ -7,6 +8,7 @@ import Http
 import Json.Decode
 import Lamdera exposing (ClientId, SessionId)
 import Set
+import Task
 import Time
 import Types exposing (..)
 import Url
@@ -31,6 +33,10 @@ type alias Model =
     BackendModel
 
 
+type alias Msg =
+    BackendMsg
+
+
 app =
     Lamdera.backend
         { init = init
@@ -40,12 +46,12 @@ app =
         }
 
 
-init : ( Model, Cmd BackendMsg )
+init : ( Model, Cmd Msg )
 init =
     ( { library = EmptyLibrary
       , errorCount = Dict.empty
       , errorLog = []
-      , productions = Dict.empty
+      , staleTimer = TimerNotSet
       }
     , Cmd.none
     )
@@ -60,13 +66,12 @@ init =
 --       |_|
 
 
-updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
+updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd Msg )
 updateFromFrontend sessionId clientId msg model =
     case msg of
         -- App
         ClientInit ->
             clientInitHelper sessionId model
-                |> fetchLibraryHelper sessionId
 
         JoinProduction name id ->
             joinProductionHelper model sessionId name id
@@ -82,14 +87,17 @@ updateFromFrontend sessionId clientId msg model =
             let
                 setLineNumber _ production =
                     { production | status = production.status + 1 }
-
-                newProductions =
-                    Dict.map setLineNumber model.productions
             in
-            ( { model | productions = newProductions }, Lamdera.broadcast IncrementLineNumber )
+            -- TODO Advance one production instead of all of them
+            ( { model | library = mapProductions (Dict.map setLineNumber) model.library }
+            , Cmd.batch
+                [ Lamdera.broadcast IncrementLineNumber
+                , Task.perform CheckTimer Time.now
+                ]
+            )
 
 
-update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GotScriptList sessionId response ->
@@ -117,6 +125,36 @@ update msg model =
                 Err e ->
                     errorHelper model name e
 
+        SettingTimer time ->
+            ( { model | staleTimer = TimerSet time }, Cmd.none )
+
+        CheckTimer time ->
+            case model.staleTimer of
+                TimerSet timer ->
+                    let
+                        now =
+                            Time.posixToMillis time
+
+                        limit =
+                            1000 * 10
+
+                        staleTimer =
+                            Time.posixToMillis timer + limit
+                    in
+                    if now > staleTimer then
+                        ( { model
+                            | staleTimer = TimerNotSet
+                            , library = mapProductions (\_ -> Dict.empty) model.library
+                          }
+                        , Cmd.none
+                        )
+
+                    else
+                        ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 
 --  _   _           _       _         _   _      _
@@ -127,62 +165,109 @@ update msg model =
 --       |_|                                      |_|
 
 
-joinProductionHelper ({ productions } as model) actorSessionId name directorSessionId =
+joinProductionHelper : Model -> SessionId -> String -> SessionId -> ( Model, Cmd Msg )
+joinProductionHelper model actorSessionId name directorSessionId =
     let
         setName _ production =
             { production
                 | namesBySessionId =
                     Dict.insert actorSessionId name production.namesBySessionId
             }
-
-        newProductions =
-            Dict.map setName productions
     in
-    ( { model | productions = newProductions }
+    ( { model | library = mapProductions (Dict.map setName) model.library }
     , Lamdera.sendToFrontend directorSessionId (ActorJoined name actorSessionId)
     )
 
 
+type NewClient
+    = ClientBeforeLibraryLoaded
+    | NoActiveProduction
+    | CurrentActor Production String
+    | CurrentDirector (List Script)
+    | InvitedActor Production
+
+
+clientInitHelper : SessionId -> Model -> ( Model, Cmd Msg )
 clientInitHelper sessionId model =
-    case Dict.toList model.productions of
-        -- TODO Enable multiple productions instead of overwriting one
-        ( _, production ) :: [] ->
-            case Dict.get sessionId production.namesBySessionId of
-                Just name ->
-                    ( model
-                    , Lamdera.sendToFrontend sessionId
-                        (SetState
-                            { script = production.script
-                            , name = name
-                            , casting = production.casting
-                            , lineNumber = production.status
-                            }
-                        )
-                    )
+    selectProduction sessionId model
+        |> newClientAction sessionId model
 
-                Nothing ->
-                    if sessionId == production.directorId then
-                        case model.library of
-                            Library lib ->
-                                -- If director rejoins, let them browse
-                                ( model, Lamdera.sendToFrontend sessionId (LoadLibrary lib.scripts) )
 
-                            -- Nonsense. Director reloads but we have no scripts
-                            _ ->
-                                ( model, Cmd.none )
+selectProduction : SessionId -> Model -> NewClient
+selectProduction sessionId model =
+    case model.library of
+        FullLibrary { productions } ->
+            case Dict.toList productions of
+                -- TODO Enable multiple productions instead of overwriting one
+                ( _, production ) :: [] ->
+                    selectProductionClient sessionId model production
 
-                    else
-                        -- If actor joins while casting, invite them
-                        ( model
-                        , Lamdera.sendToFrontend sessionId (ConsiderInvite production.script production.directorId)
-                        )
+                _ ->
+                    NoActiveProduction
 
         _ ->
+            ClientBeforeLibraryLoaded
+
+
+selectProductionClient : SessionId -> Model -> Production -> NewClient
+selectProductionClient sessionId model production =
+    case Dict.get sessionId production.namesBySessionId of
+        Just name ->
+            CurrentActor production name
+
+        Nothing ->
+            if sessionId == production.directorId then
+                case model.library of
+                    FullLibrary { scripts } ->
+                        CurrentDirector scripts
+
+                    _ ->
+                        ClientBeforeLibraryLoaded
+
+            else
+                -- If actor joins while casting, invite them
+                InvitedActor production
+
+
+newClientAction : SessionId -> Model -> NewClient -> ( Model, Cmd Msg )
+newClientAction sessionId model client =
+    case client of
+        CurrentActor production name ->
+            ( model
+            , Lamdera.sendToFrontend sessionId
+                (SetState
+                    { script = production.script
+                    , name = name
+                    , casting = production.casting
+                    , lineNumber = production.status
+                    }
+                )
+            )
+
+        ClientBeforeLibraryLoaded ->
+            fetchLibraryHelper sessionId model
+
+        InvitedActor production ->
+            ( model
+            , Lamdera.sendToFrontend sessionId (ConsiderInvite production.script production.directorId)
+            )
+
+        CurrentDirector scripts ->
+            ( model, Lamdera.sendToFrontend sessionId (LoadLibrary scripts) )
+
+        NoActiveProduction ->
+            ( model
+            , Cmd.none
+              -- , Lamdera.sendToFrontend sessionId LoadLibrary scripts
+            )
+
+
+fetchLibraryHelper : SessionId -> Model -> ( Model, Cmd Msg )
+fetchLibraryHelper sessionId model =
+    case model.library of
+        FullLibrary lib ->
             ( model, Cmd.none )
 
-
-fetchLibraryHelper sessionId ( model, cmd ) =
-    case model.library of
         EmptyLibrary ->
             let
                 newModel =
@@ -193,8 +278,7 @@ fetchLibraryHelper sessionId ( model, cmd ) =
             in
             ( newModel
             , Cmd.batch
-                [ cmd
-                , Http.get
+                [ Http.get
                     { url = Env.s3Url ++ "play_list.json"
                     , expect = Http.expectJson (GotScriptList sessionId) scriptIndexDecoder
                     }
@@ -202,23 +286,11 @@ fetchLibraryHelper sessionId ( model, cmd ) =
                 ]
             )
 
-        Library lib ->
-            ( model
-            , Cmd.batch
-                [ cmd
-                , Lamdera.sendToFrontend sessionId (LoadLibrary lib.scripts)
-                ]
-            )
-
         Updating _ _ ->
-            ( model
-            , Cmd.batch
-                [ cmd
-                , Lamdera.broadcast (ReportErrors model.errorLog)
-                ]
-            )
+            ( model, Lamdera.broadcast (ReportErrors model.errorLog) )
 
 
+shareScript : SessionId -> Model -> Script -> ( Model, Cmd Msg )
 shareScript directorSessionId model script =
     -- For now, everyone joins a production if you share it.
     -- There is only one production, overwritten by any director.
@@ -235,22 +307,30 @@ shareScript directorSessionId model script =
                   )
                 ]
     in
-    ( { model | productions = productions }
+    ( { model | library = mapProductions (\_ -> productions) model.library }
     , Lamdera.broadcast (ConsiderInvite script directorSessionId)
     )
 
 
-shareCasting ({ productions } as model) casting =
+shareCasting : Model -> CastingChoices -> ( Model, Cmd Msg )
+shareCasting model casting =
     let
         setCast _ production =
             { production | casting = casting }
-
-        newProductions =
-            Dict.map setCast productions
     in
-    ( { model | productions = newProductions }, Lamdera.broadcast (StartCueing casting) )
+    ( { model | library = mapProductions (Dict.map setCast) model.library }
+    , Cmd.batch
+        [ Lamdera.broadcast (StartCueing casting)
+        , Task.perform SettingTimer Time.now
+        ]
+    )
 
 
+gotScriptListHelper :
+    Model
+    -> SessionId
+    -> Result Http.Error (List String)
+    -> ( Model, Cmd Msg )
 gotScriptListHelper model sessionId response =
     case response of
         Ok list ->
@@ -279,7 +359,7 @@ gotScriptListHelper model sessionId response =
             )
 
 
-fetchedScriptHelper : Model -> String -> Script -> ( Model, Cmd BackendMsg )
+fetchedScriptHelper : Model -> String -> Script -> ( Model, Cmd Msg )
 fetchedScriptHelper model name script =
     case model.library of
         Updating sessionId { added, notAdded, scripts } ->
@@ -294,7 +374,12 @@ fetchedScriptHelper model name script =
             ( if Set.size progress.notAdded == 0 then
                 { model
                     | errorLog = "Finished loading library" :: model.errorLog
-                    , library = Library { titles = Set.toList progress.added, scripts = progress.scripts }
+                    , library =
+                        FullLibrary
+                            { titles = Set.toList progress.added
+                            , scripts = progress.scripts
+                            , productions = Dict.empty
+                            }
                 }
 
               else
@@ -375,7 +460,7 @@ errorToString err =
 --
 
 
-fetchScript : String -> Cmd BackendMsg
+fetchScript : String -> Cmd Msg
 fetchScript name =
     let
         promptDecoder : Json.Decode.Decoder ScriptLine
@@ -401,7 +486,7 @@ type alias ScriptLine =
     { speaker : String, line : String, title : String, part : String }
 
 
-subscriptions : Model -> Sub BackendMsg
+subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.library of
         Updating _ { added, notAdded, fetching } ->
@@ -418,3 +503,25 @@ subscriptions model =
 
         _ ->
             Sub.none
+
+
+
+--   ____                           _
+--  / ___|___  _ ____   _____ _ __ (_) ___ _ __   ___ ___
+-- | |   / _ \| '_ \ \ / / _ \ '_ \| |/ _ \ '_ \ / __/ _ \
+-- | |__| (_) | | | \ V /  __/ | | | |  __/ | | | (_|  __/
+--  \____\___/|_| |_|\_/ \___|_| |_|_|\___|_| |_|\___\___|
+--
+
+
+mapProductions :
+    (Dict.Dict String Production -> Dict.Dict String Production)
+    -> State
+    -> State
+mapProductions f library =
+    case library of
+        FullLibrary ({ productions } as lib) ->
+            FullLibrary { lib | productions = f productions }
+
+        _ ->
+            library

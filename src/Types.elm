@@ -19,11 +19,16 @@ type alias FrontendModel =
 
 
 type alias BackendModel =
-    { library : ScriptLibrary
+    { library : State
     , errorCount : Dict String Int
     , errorLog : List String
-    , productions : Dict String Production
+    , staleTimer : Timer
     }
+
+
+type Timer
+    = TimerSet Time.Posix
+    | TimerNotSet
 
 
 type alias Script =
@@ -38,9 +43,9 @@ type alias Script =
     }
 
 
-type ScriptLibrary
+type State
     = EmptyLibrary
-    | Library { titles : List String, scripts : List Script }
+    | FullLibrary { titles : List String, scripts : List Script, productions : Dict String Production }
     | Updating
         ClientId
         { notAdded : Set.Set String
@@ -79,6 +84,8 @@ type BackendMsg
     = GotScriptList ClientId (Result Http.Error (List String))
     | FetchedScript String (Result Http.Error Script)
     | FetchScript String Time.Posix
+    | SettingTimer Time.Posix
+    | CheckTimer Time.Posix
 
 
 type
