@@ -181,7 +181,7 @@ joinProductionHelper model actorSessionId name directorSessionId =
 
 type NewClient
     = ClientBeforeLibraryLoaded
-    | NoActiveProduction
+    | NoActiveProduction (List Script)
     | CurrentActor Production String
     | CurrentDirector (List Script)
     | InvitedActor Production
@@ -196,33 +196,28 @@ clientInitHelper sessionId model =
 selectProduction : SessionId -> Model -> NewClient
 selectProduction sessionId model =
     case model.library of
-        FullLibrary { productions } ->
+        FullLibrary { scripts, productions } ->
             case Dict.toList productions of
                 -- TODO Enable multiple productions instead of overwriting one
                 ( _, production ) :: [] ->
-                    selectProductionClient sessionId model production
+                    selectProductionClient sessionId scripts production
 
                 _ ->
-                    NoActiveProduction
+                    NoActiveProduction scripts
 
         _ ->
             ClientBeforeLibraryLoaded
 
 
-selectProductionClient : SessionId -> Model -> Production -> NewClient
-selectProductionClient sessionId model production =
+selectProductionClient : SessionId -> List Script -> Production -> NewClient
+selectProductionClient sessionId scripts production =
     case Dict.get sessionId production.namesBySessionId of
         Just name ->
             CurrentActor production name
 
         Nothing ->
             if sessionId == production.directorId then
-                case model.library of
-                    FullLibrary { scripts } ->
-                        CurrentDirector scripts
-
-                    _ ->
-                        ClientBeforeLibraryLoaded
+                CurrentDirector scripts
 
             else
                 -- If actor joins while casting, invite them
@@ -255,10 +250,9 @@ newClientAction sessionId model client =
         CurrentDirector scripts ->
             ( model, Lamdera.sendToFrontend sessionId (LoadLibrary scripts) )
 
-        NoActiveProduction ->
+        NoActiveProduction scripts ->
             ( model
-            , Cmd.none
-              -- , Lamdera.sendToFrontend sessionId LoadLibrary scripts
+            , Lamdera.sendToFrontend sessionId (LoadLibrary scripts)
             )
 
 
