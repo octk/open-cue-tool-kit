@@ -189,12 +189,12 @@ type NewClient
 
 clientInitHelper : SessionId -> Model -> ( Model, Cmd Msg )
 clientInitHelper sessionId model =
-    selectProduction sessionId model
+    categorizeClient sessionId model
         |> newClientAction sessionId model
 
 
-selectProduction : SessionId -> Model -> NewClient
-selectProduction sessionId model =
+categorizeClient : SessionId -> Model -> NewClient
+categorizeClient sessionId model =
     case model.library of
         FullLibrary { scripts, productions } ->
             case Dict.toList productions of
@@ -302,7 +302,7 @@ shareScript directorSessionId model script =
                 ]
     in
     ( { model | library = mapProductions (\_ -> productions) model.library }
-    , Lamdera.broadcast (ConsiderInvite script directorSessionId)
+    , Cmd.none
     )
 
 

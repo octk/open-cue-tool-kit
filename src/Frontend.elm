@@ -1,8 +1,10 @@
 module Frontend exposing (..)
 
+import Actor
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
-import Client exposing (Msg(..), PlatformResponse(..))
+import Client exposing (Msg(..), PlatformCmd(..), PlatformResponse(..))
+import Director
 import Env
 import Html
 import Html.Attributes as Attr
@@ -31,17 +33,27 @@ platformCmdTransform platformCmd =
         Client.ClientInit ->
             Lamdera.sendToBackend Types.ClientInit
 
-        Client.MakeInvitation script ->
-            Lamdera.sendToBackend (Types.MakeInvitation script)
+        DirectorPC subCommand ->
+            case subCommand of
+                Director.MakeInvitation script ->
+                    Lamdera.sendToBackend (Types.MakeInvitation script)
 
-        Client.JoinProduction name id ->
-            Lamdera.sendToBackend (Types.JoinProduction name id)
+                Director.ShareProduction casting ->
+                    Lamdera.sendToBackend (Types.ShareProduction casting)
 
-        Client.ShareProduction casting ->
-            Lamdera.sendToBackend (Types.ShareProduction casting)
+                Director.NoCmd ->
+                    Cmd.none
 
-        Client.AdvanceCue ->
-            Lamdera.sendToBackend Types.AdvanceCue
+        ActorPC subCommand ->
+            case subCommand of
+                Actor.AdvanceCue ->
+                    Lamdera.sendToBackend Types.AdvanceCue
+
+                Actor.JoinProduction name id ->
+                    Lamdera.sendToBackend (Types.JoinProduction name id)
+
+                Actor.NoCmd ->
+                    Cmd.none
 
 
 updateFromBackend :
@@ -50,26 +62,26 @@ updateFromBackend :
     -> ( Model, Cmd Msg )
 updateFromBackend msg model =
     case msg of
-        Types.LoadLibrary s ->
-            ( model, relayPlatformResponse (Client.AddScripts s) )
-
-        Types.ConsiderInvite script clientId ->
-            ( model, relayPlatformResponse (Client.ConsiderInvite script clientId) )
-
-        Types.ActorJoined name clientId ->
-            ( model, relayPlatformResponse (Client.ActorJoined name clientId) )
-
-        Types.StartCueing casting ->
-            ( model, relayPlatformResponse (Client.StartCueing casting) )
-
-        Types.IncrementLineNumber ->
-            ( model, relayPlatformResponse Client.IncrementLineNumber )
-
         Types.ReportErrors errors ->
             ( model, relayPlatformResponse (Client.ReportErrors errors) )
 
+        Types.LoadLibrary s ->
+            ( model, relayPlatformResponse (DirectorPR (Director.AddScripts s)) )
+
+        Types.ActorJoined name clientId ->
+            ( model, relayPlatformResponse (DirectorPR (Director.ActorJoined name clientId)) )
+
+        Types.ConsiderInvite script clientId ->
+            ( model, relayPlatformResponse (ActorPR (Actor.ConsiderInvite script clientId)) )
+
+        Types.StartCueing casting ->
+            ( model, relayPlatformResponse (ActorPR (Actor.StartCueing casting)) )
+
+        Types.IncrementLineNumber ->
+            ( model, relayPlatformResponse (ActorPR Actor.IncrementLineNumber) )
+
         Types.SetState state ->
-            ( model, relayPlatformResponse (Client.SetState state) )
+            ( model, relayPlatformResponse (ActorPR (Actor.SetState state)) )
 
 
 subscriptions m =
@@ -138,7 +150,7 @@ init url key =
       }
     , Cmd.batch
         [ Lamdera.sendToBackend Types.ClientInit
-        , relayPlatformResponse (Client.SetHost Env.host)
+        , relayPlatformResponse (DirectorPR (Director.SetHost Env.host))
         ]
     )
 

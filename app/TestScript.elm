@@ -1,4 +1,4 @@
-module TestScript exposing (testScript)
+module TestScript exposing (testScript, testScript2)
 
 
 testScript =
@@ -723,3 +723,20 @@ testScript =
       , part = ""
       }
     ]
+
+
+testScript2 =
+    { title = "Hamlet"
+    , lines =
+        [ { speaker = "Hamlet"
+          , line = "As happy prologues to the swelling act\nOf the imperial theme.—I thank you, gentlemen.\n[Aside] This supernatural soliciting\nCannot be ill, cannot be good: if ill,\nWhy hath it given me earnest of success,\nCommencing in a truth? I am thane of Cawdor:\nIf good, why do I yield to that suggestion\nWhose horrid image doth unfix my hair\nAnd make my seated heart knock at my ribs,\nAgainst the use of nature? Present fears\nAre less than horrible imaginings:\nMy thought, whose murder yet is but fantastical,\nShakes so my single state of man that function\nIs smother'd in surmise, and nothing is\nBut what is not. \nShakes so my single state of man that function\nIs smother'd in surmise, and nothing is\nBut what is not. \nShakes so my single state of man that function\nIs smother'd in surmise, and nothing is\nBut what is not. "
+          , title = ""
+          , part = ""
+          }
+        , { speaker = "Banquo"
+          , line = "Oh the transformation is happening. Anna Oh, yep. Is turning into a horse. He's turning into a horse. Look at that now is a horse. Now I'm going to fight the horse. Had a run runs a safety forever away from here. Run Hannah. What? Stop that horse, you get off of that?"
+          , title = ""
+          , part = ""
+          }
+        ]
+    }

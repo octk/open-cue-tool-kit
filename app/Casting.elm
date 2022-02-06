@@ -33,6 +33,18 @@ type alias Part =
     String
 
 
+type alias Script =
+    { title : String
+    , lines :
+        List
+            { speaker : String
+            , line : String
+            , title : String
+            , part : String
+            }
+    }
+
+
 whichActorsPlayPart : Part -> CastingChoices -> List Actor
 whichActorsPlayPart part casting =
     casting
