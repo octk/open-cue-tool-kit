@@ -48,7 +48,7 @@ import TestScript exposing (testScript)
 
 
 type Model
-    = Loading
+    = InitialLoading
     | Debugging (List String)
     | Testing Int
     | Spectating
@@ -82,7 +82,7 @@ initialModel : Model
 initialModel =
     -- initialModel = Testing 0
     -- To test, replace below with above
-    Loading
+    InitialLoading
 
 
 update : Msg -> Model -> ( Model, PlatformCmd )
@@ -115,6 +115,7 @@ update msg model =
 updateFromPlatform : PlatformResponse -> Model -> ( Model, PlatformCmd )
 updateFromPlatform response model =
     case ( response, model ) of
+        -- Update
         ( ActorPR subResponse, Actor subModel ) ->
             Actor.updateFromPlatform subResponse subModel
                 |> Tuple.mapFirst Actor
@@ -122,6 +123,17 @@ updateFromPlatform response model =
 
         ( DirectorPR subResponse, Director subModel ) ->
             Director.updateFromPlatform subResponse subModel
+                |> Tuple.mapFirst Director
+                |> Tuple.mapSecond DirectorPC
+
+        -- Init
+        ( ActorPR subResponse, _ ) ->
+            Actor.initialize subResponse
+                |> Tuple.mapFirst Actor
+                |> Tuple.mapSecond ActorPC
+
+        ( DirectorPR subResponse, _ ) ->
+            Director.initialize subResponse
                 |> Tuple.mapFirst Director
                 |> Tuple.mapSecond DirectorPC
 
@@ -147,7 +159,7 @@ viewHelper testingMsg model =
                         |> Maybe.withDefault model
                         |> viewHelper (Just AdvanceInterfaceTestCase)
 
-                Loading ->
+                InitialLoading ->
                     loadingPage
 
                 Debugging errors ->
@@ -191,6 +203,6 @@ doNothing =
 
 interfaceTestCases : List Model
 interfaceTestCases =
-    [ Loading ]
+    [ InitialLoading ]
         ++ List.map Director Director.interfaceTestCases
         ++ List.map Actor Actor.interfaceTestCases

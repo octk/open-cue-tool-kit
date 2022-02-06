@@ -1,4 +1,4 @@
-module Director exposing (Actor, CastingDetails, ManualChoice(..), Model(..), Msg(..), Part, PlatformCmd(..), PlatformResponse(..), actorJoinedHelper, alreadyCastPartsAndActors, beginShowHelper, browsingPage, cancelModalHelper, castHelper, castingModal, castingPage, castingSwitch, considerCastingChoiceHelper, interfaceTestCases, mapCasting, pickScriptHelper, toggleAutocastHelper, update, updateFromPlatform, view, yetUncastActors, yetUncastParts)
+module Director exposing (Actor, CastingDetails, ManualChoice(..), Model(..), Msg(..), Part, PlatformCmd(..), PlatformResponse(..), actorJoinedHelper, alreadyCastPartsAndActors, beginShowHelper, browsingPage, cancelModalHelper, castHelper, castingModal, castingPage, castingSwitch, considerCastingChoiceHelper, initialize, interfaceTestCases, mapCasting, pickScriptHelper, toggleAutocastHelper, update, updateFromPlatform, view, yetUncastActors, yetUncastParts)
 
 import Casting exposing (..)
 import Css
@@ -23,7 +23,7 @@ import TestScript exposing (testScript, testScript2)
 
 
 type Model
-    = Browsing (List Script)
+    = Browsing (List Script) String
     | Casting CastingDetails
     | WaitingForScripts
 
@@ -38,9 +38,8 @@ type Msg
 
 
 type PlatformResponse
-    = AddScripts (List Script)
+    = AddScripts (List Script) String
     | ActorJoined String String
-    | SetHost String
 
 
 type PlatformCmd
@@ -64,7 +63,7 @@ view model =
         Casting cast ->
             castingPage cast
 
-        Browsing scripts ->
+        Browsing scripts _ ->
             browsingPage scripts
 
         WaitingForScripts ->
@@ -852,6 +851,11 @@ mapCasting f model =
             other
 
 
+initialize : PlatformResponse -> ( Model, PlatformCmd )
+initialize response =
+    updateFromPlatform response WaitingForScripts
+
+
 update : Msg -> Model -> ( Model, PlatformCmd )
 update msg model =
     case msg of
@@ -880,13 +884,10 @@ updateFromPlatform response model =
         ActorJoined name actorClientId ->
             ( mapCasting (actorJoinedHelper name actorClientId) model, NoCmd )
 
-        AddScripts scripts ->
-            ( Browsing scripts
+        AddScripts scripts host ->
+            ( Browsing scripts host
             , NoCmd
             )
-
-        SetHost host ->
-            ( mapCasting (\details -> { details | host = Just host }) model, NoCmd )
 
 
 beginShowHelper : Model -> ( Model, PlatformCmd )
@@ -906,6 +907,14 @@ pickScriptHelper :
     -> ( Model, PlatformCmd )
 pickScriptHelper model title lines =
     let
+        hostUrl =
+            case model of
+                Browsing _ host ->
+                    Just host
+
+                _ ->
+                    Nothing
+
         script =
             Script title lines
     in
@@ -913,7 +922,7 @@ pickScriptHelper model title lines =
         { casting = makeEmptyCast lines []
         , manualCasting = Nothing
         , script = script
-        , host = Nothing
+        , host = hostUrl
         , autocast = False
         }
     , MakeInvitation script
@@ -1026,4 +1035,5 @@ interfaceTestCases =
         , testScript2
         , testScript2
         ]
+        ""
     ]

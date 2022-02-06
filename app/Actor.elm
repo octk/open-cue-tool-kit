@@ -1,4 +1,4 @@
-module Actor exposing (AcceptingDetails, CueingAction(..), CueingDetails, Model(..), Msg(..), PlatformCmd(..), PlatformResponse(..), acceptInvitationHelper, acceptingPage, cueingPage, incrementLineNumberHelper, interfaceTestCases, makeCueingAction, update, updateFromPlatform, view)
+module Actor exposing (AcceptingDetails, CueingAction(..), CueingDetails, Model(..), Msg(..), PlatformCmd(..), PlatformResponse(..), acceptInvitationHelper, acceptingPage, cueingPage, incrementLineNumberHelper, initialize, interfaceTestCases, makeCueingAction, update, updateFromPlatform, view)
 
 import Casting exposing (Script)
 import Css
@@ -6,7 +6,7 @@ import Css.Global
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes as Attr exposing (css)
 import Html.Styled.Events as Events exposing (onClick)
-import Interface exposing (appHeight)
+import Interface exposing (appHeight, loadingPage)
 import List.Extra as List
 import Loading
     exposing
@@ -24,7 +24,8 @@ import TestScript exposing (testScript, testScript2)
 
 
 type Model
-    = Cueing CueingDetails
+    = WaitingForInvite
+    | Cueing CueingDetails
     | Accepting AcceptingDetails
 
 
@@ -72,6 +73,9 @@ type PlatformCmd
 view : Model -> Html Msg
 view model =
     case model of
+        WaitingForInvite ->
+            loadingPage
+
         Cueing cueDetails ->
             cueingPage (makeCueingAction cueDetails)
 
@@ -364,6 +368,11 @@ makeCueingAction { script, casting, lineNumber, name } =
 
             else
                 Listening { speaker = speaker, nextParts = nextParts }
+
+
+initialize : PlatformResponse -> ( Model, PlatformCmd )
+initialize response =
+    updateFromPlatform response WaitingForInvite
 
 
 update : Msg -> Model -> ( Model, PlatformCmd )

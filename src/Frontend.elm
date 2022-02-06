@@ -66,7 +66,9 @@ updateFromBackend msg model =
             ( model, relayPlatformResponse (Client.ReportErrors errors) )
 
         Types.LoadLibrary s ->
-            ( model, relayPlatformResponse (DirectorPR (Director.AddScripts s)) )
+            ( model
+            , relayPlatformResponse (DirectorPR (Director.AddScripts s Env.host))
+            )
 
         Types.ActorJoined name clientId ->
             ( model, relayPlatformResponse (DirectorPR (Director.ActorJoined name clientId)) )
@@ -150,7 +152,6 @@ init url key =
       }
     , Cmd.batch
         [ Lamdera.sendToBackend Types.ClientInit
-        , relayPlatformResponse (DirectorPR (Director.SetHost Env.host))
         ]
     )
 
