@@ -107,7 +107,7 @@ advanceCueHelper model =
                     ( { model | library = mapProductions (Dict.map setLineNumber) model.library }
                     , Cmd.batch
                         [ tellActors IncrementLineNumber
-                        , Task.perform CheckTimer Time.now
+                        , Task.perform GotSetTimerMoment Time.now
                         ]
                     )
 
@@ -146,35 +146,11 @@ update msg model =
                 Err e ->
                     errorHelper model name e
 
-        SettingTimer time ->
+        GotSetTimerMoment time ->
             ( { model | staleTimer = TimerSet time }, Cmd.none )
 
-        CheckTimer time ->
-            case model.staleTimer of
-                TimerSet timer ->
-                    let
-                        now =
-                            Time.posixToMillis time
-
-                        limit =
-                            1000 * 10
-
-                        staleTimer =
-                            Time.posixToMillis timer + limit
-                    in
-                    if now > staleTimer then
-                        ( { model
-                            | staleTimer = TimerNotSet
-                            , library = mapProductions (\_ -> Dict.empty) model.library
-                          }
-                        , Cmd.none
-                        )
-
-                    else
-                        ( model, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none )
+        GotCheckTimerMoment time ->
+            checkTimerHelper model time
 
 
 
@@ -196,7 +172,10 @@ joinProductionHelper model actorSessionId name directorSessionId =
             }
     in
     ( { model | library = mapProductions (Dict.map setName) model.library }
-    , Lamdera.sendToFrontend directorSessionId (ActorJoined name actorSessionId)
+    , Cmd.batch
+        [ Lamdera.sendToFrontend directorSessionId (ActorJoined name actorSessionId)
+        , Task.perform GotSetTimerMoment Time.now
+        ]
     )
 
 
@@ -244,7 +223,8 @@ selectProductionClient sessionId scripts production =
             else
             -- If actor joins while casting, invite them
             if
-                production.status > 1
+                List.length production.casting > 0
+                -- Show was cast already
             then
                 Spectator
 
@@ -356,7 +336,7 @@ shareCasting model casting =
                     ( { model | library = mapProductions (Dict.map setCast) model.library }
                     , Cmd.batch
                         [ tellActors (StartCueing casting)
-                        , Task.perform SettingTimer Time.now
+                        , Task.perform GotSetTimerMoment Time.now
                         ]
                     )
 
@@ -492,6 +472,38 @@ errorToString err =
             "Elm.HTTP bad body error: " ++ s
 
 
+checkTimerHelper model time =
+    case model.staleTimer of
+        TimerSet timer ->
+            let
+                now =
+                    Time.posixToMillis time
+
+                limitMillis =
+                    1000 * 60 * 10
+
+                staleTimer =
+                    Time.posixToMillis timer + limitMillis
+
+                newErrorLog =
+                    "Ending production which ran for 10 minutes without any actions" :: model.errorLog
+            in
+            if now > staleTimer then
+                ( { model
+                    | staleTimer = TimerNotSet
+                    , errorLog = newErrorLog
+                    , library = mapProductions (\_ -> Dict.empty) model.library
+                  }
+                , Lamdera.broadcast (ReportErrors newErrorLog)
+                )
+
+            else
+                ( model, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
+
+
 
 --    ___                                          _
 --  / ___|___  _ __ ___  _ __ ___   __ _ _ __   __| |___
@@ -529,6 +541,22 @@ type alias ScriptLine =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
+    Sub.batch
+        [ fetchScriptTrigger model
+        , checkStaleProductionTrigger model
+        ]
+
+
+checkStaleProductionTrigger model =
+    case model.staleTimer of
+        TimerSet _ ->
+            Time.every 1000 GotCheckTimerMoment
+
+        TimerNotSet ->
+            Sub.none
+
+
+fetchScriptTrigger model =
     case model.library of
         Updating _ { added, notAdded, fetching } ->
             case List.head (Set.toList notAdded) of

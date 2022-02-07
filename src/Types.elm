@@ -57,15 +57,11 @@ type State
 
 type alias Production =
     { directorId : String
-    , status : ProductionStatus
+    , status : Int
     , script : Script
     , casting : CastingChoices
     , namesBySessionId : Dict String String
     }
-
-
-type alias ProductionStatus =
-    Int
 
 
 type alias FrontendMsg =
@@ -84,8 +80,8 @@ type BackendMsg
     = GotScriptList ClientId (Result Http.Error (List String))
     | FetchedScript String (Result Http.Error Script)
     | FetchScript String Time.Posix
-    | SettingTimer Time.Posix
-    | CheckTimer Time.Posix
+    | GotCheckTimerMoment Time.Posix
+    | GotSetTimerMoment Time.Posix
 
 
 type
