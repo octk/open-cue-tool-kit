@@ -85,6 +85,9 @@ updateFromBackend msg model =
         Types.SetState state ->
             ( model, relayPlatformResponse (ActorPR (Actor.SetState state)) )
 
+        Types.JoinedAsSpectator ->
+            ( model, relayPlatformResponse JoinedAsSpectator )
+
 
 subscriptions m =
     Sub.none

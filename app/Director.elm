@@ -6,7 +6,7 @@ import Css.Global
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes as Attr exposing (css)
 import Html.Styled.Events as Events exposing (onClick)
-import Interface exposing (appHeight, emptyTemplate, loadingPage)
+import Interface exposing (appHeight, emptyTemplate, genericPage, loadingPage)
 import Loading
     exposing
         ( LoaderType(..)
@@ -26,6 +26,7 @@ type Model
     = Browsing (List Script) String
     | Casting CastingDetails
     | WaitingForScripts
+    | ShowIsRunning
 
 
 type Msg
@@ -68,6 +69,9 @@ view model =
 
         WaitingForScripts ->
             loadingPage
+
+        ShowIsRunning ->
+            genericPage "Show is running" (Html.text "")
 
 
 browsingPage scripts =
@@ -894,7 +898,7 @@ beginShowHelper : Model -> ( Model, PlatformCmd )
 beginShowHelper model =
     case model of
         Casting { casting } ->
-            ( model, ShareProduction casting )
+            ( ShowIsRunning, ShareProduction casting )
 
         _ ->
             ( model, NoCmd )
@@ -923,7 +927,7 @@ pickScriptHelper model title lines =
         , manualCasting = Nothing
         , script = script
         , host = hostUrl
-        , autocast = False
+        , autocast = True
         }
     , MakeInvitation script
     )

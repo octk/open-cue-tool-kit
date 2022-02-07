@@ -14,7 +14,7 @@ import Casting exposing (..)
 import Dict exposing (Dict)
 import Director
 import Html.Styled as Html exposing (..)
-import Interface exposing (appScaffolding, debuggingPage, loadingPage, tMenu)
+import Interface exposing (appScaffolding, debuggingPage, genericPage, loadingPage, tMenu)
 import List.Extra as List
 import TestScript exposing (testScript)
 
@@ -67,6 +67,7 @@ type Msg
 type PlatformResponse
     = NoResponse
     | ReportErrors (List String)
+    | JoinedAsSpectator
     | ActorPR Actor.PlatformResponse
     | DirectorPR Director.PlatformResponse
 
@@ -140,6 +141,9 @@ updateFromPlatform response model =
         ( ReportErrors errors, _ ) ->
             ( Debugging errors, NoCmd )
 
+        ( JoinedAsSpectator, _ ) ->
+            ( Spectating, NoCmd )
+
         ( _, _ ) ->
             ( model, NoCmd )
 
@@ -166,7 +170,7 @@ viewHelper testingMsg model =
                     debuggingPage errors
 
                 Spectating ->
-                    Debug.todo "Add spectating page"
+                    genericPage "Spectating (show in progress)" (Html.text "")
 
                 Director subModel ->
                     Director.view subModel

@@ -3,6 +3,7 @@ module Interface exposing
     , appScaffolding
     , debuggingPage
     , emptyTemplate
+    , genericPage
     , loadingPage
     , tMenu
     )
@@ -93,7 +94,7 @@ appScaffolding menu currentPage =
 -- TODO Make an elm-review rule that formats these long css lists more nicely.
 
 
-loadingPage =
+genericPage header filler =
     div [ css [ Tw.bg_white ] ]
         [ div
             [ css
@@ -116,40 +117,22 @@ loadingPage =
                         , Tw.py_6
                         ]
                     ]
-                    [ text "Loading" ]
-                , Html.fromUnstyled <| Loading.render Spinner { defaultConfig | color = "#4F46E5" } Loading.On
+                    [ text header ]
+                , filler
                 ]
             ]
         ]
+
+
+loadingPage =
+    Loading.render Spinner { defaultConfig | color = "#4F46E5" } Loading.On
+        |> Html.fromUnstyled
+        |> genericPage "Loading"
 
 
 debuggingPage errors =
-    div [ css [ Tw.bg_white ] ]
-        [ div
-            [ css
-                [ Tw.max_w_7xl
-                , Tw.mx_auto
-                , Tw.py_16
-                , Tw.px_4
-                , Bp.lg [ Tw.px_8 ]
-                , Bp.sm [ Tw.py_24, Tw.px_6 ]
-                ]
-            ]
-            [ div [ css [ Tw.text_center ] ]
-                [ h2
-                    [ css
-                        [ Tw.text_base
-                        , Tw.font_semibold
-                        , Tw.text_indigo_600
-                        , Tw.tracking_wide
-                        , Tw.uppercase
-                        ]
-                    ]
-                    [ text "Errors encountered" ]
-                , pre [] [ text (String.join "\n" errors) ]
-                ]
-            ]
-        ]
+    pre [] [ text (String.join "\n" errors) ]
+        |> genericPage "Errors encountered"
 
 
 

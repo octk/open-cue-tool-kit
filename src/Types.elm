@@ -104,3 +104,4 @@ type
     | IncrementLineNumber
     | ReportErrors (List String)
     | SetState { script : Script, name : String, casting : CastingChoices, lineNumber : Int }
+    | JoinedAsSpectator

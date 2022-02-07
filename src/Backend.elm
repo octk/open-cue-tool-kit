@@ -84,17 +84,38 @@ updateFromFrontend sessionId clientId msg model =
             shareCasting model casting
 
         AdvanceCue ->
-            let
-                setLineNumber _ production =
-                    { production | status = production.status + 1 }
-            in
-            -- TODO Advance one production instead of all of them
-            ( { model | library = mapProductions (Dict.map setLineNumber) model.library }
-            , Cmd.batch
-                [ Lamdera.broadcast IncrementLineNumber
-                , Task.perform CheckTimer Time.now
-                ]
-            )
+            advanceCueHelper model
+
+
+advanceCueHelper model =
+    -- TODO Move FullLibrary to own Productions.elm module
+    case model.library of
+        FullLibrary { productions } ->
+            case List.head (Dict.values productions) of
+                Just production ->
+                    let
+                        tellActors message =
+                            Dict.keys production.namesBySessionId
+                                |> List.map Lamdera.sendToFrontend
+                                |> List.map (\f -> f message)
+                                |> Cmd.batch
+
+                        setLineNumber _ p =
+                            -- TODO Advance one production instead of all of them
+                            { p | status = p.status + 1 }
+                    in
+                    ( { model | library = mapProductions (Dict.map setLineNumber) model.library }
+                    , Cmd.batch
+                        [ tellActors IncrementLineNumber
+                        , Task.perform CheckTimer Time.now
+                        ]
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -185,6 +206,7 @@ type NewClient
     | CurrentActor Production String
     | CurrentDirector (List Script)
     | InvitedActor Production
+    | Spectator
 
 
 clientInitHelper : SessionId -> Model -> ( Model, Cmd Msg )
@@ -220,7 +242,13 @@ selectProductionClient sessionId scripts production =
                 CurrentDirector scripts
 
             else
-                -- If actor joins while casting, invite them
+            -- If actor joins while casting, invite them
+            if
+                production.status > 1
+            then
+                Spectator
+
+            else
                 InvitedActor production
 
 
@@ -254,6 +282,9 @@ newClientAction sessionId model client =
             ( model
             , Lamdera.sendToFrontend sessionId (LoadLibrary scripts)
             )
+
+        Spectator ->
+            ( model, Lamdera.sendToFrontend sessionId JoinedAsSpectator )
 
 
 fetchLibraryHelper : SessionId -> Model -> ( Model, Cmd Msg )
@@ -308,16 +339,32 @@ shareScript directorSessionId model script =
 
 shareCasting : Model -> CastingChoices -> ( Model, Cmd Msg )
 shareCasting model casting =
-    let
-        setCast _ production =
-            { production | casting = casting }
-    in
-    ( { model | library = mapProductions (Dict.map setCast) model.library }
-    , Cmd.batch
-        [ Lamdera.broadcast (StartCueing casting)
-        , Task.perform SettingTimer Time.now
-        ]
-    )
+    case model.library of
+        FullLibrary { productions } ->
+            case List.head (Dict.values productions) of
+                Just production ->
+                    let
+                        tellActors message =
+                            Dict.keys production.namesBySessionId
+                                |> List.map Lamdera.sendToFrontend
+                                |> List.map (\f -> f message)
+                                |> Cmd.batch
+
+                        setCast _ p =
+                            { p | casting = casting }
+                    in
+                    ( { model | library = mapProductions (Dict.map setCast) model.library }
+                    , Cmd.batch
+                        [ tellActors (StartCueing casting)
+                        , Task.perform SettingTimer Time.now
+                        ]
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 gotScriptListHelper :
