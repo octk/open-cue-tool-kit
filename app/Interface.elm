@@ -4,8 +4,8 @@ module Interface exposing
     , debuggingPage
     , emptyTemplate
     , genericPage
+    , header
     , loadingPage
-    , tMenu
     )
 
 import Casting exposing (..)
@@ -38,8 +38,11 @@ import Tailwind.Utilities as Tw exposing (..)
 -- Scaffolding is the ui on every page
 
 
-appScaffolding : Html msg -> Html msg -> Html msg
-appScaffolding menu currentPage =
+appScaffolding :
+    { menuOpen : Bool, menu : Html msg, toggleMsg : msg }
+    -> Html msg
+    -> Html msg
+appScaffolding ({ menuOpen, menu, toggleMsg } as config) currentPage =
     div
         []
         [ Css.Global.global globalStyles
@@ -74,7 +77,19 @@ appScaffolding menu currentPage =
                         , Bp.sm [ px_6 ]
                         ]
                     ]
-                    [ div [ css [ flex, justify_between, h_16 ] ] [ menu ] ]
+                    [ div
+                        [ css [ flex, justify_between, h_16 ] ]
+                        [ menu
+                        , tHamburger toggleMsg
+                        ]
+                    ]
+                , div []
+                    (if menuOpen then
+                        [ tMenu ]
+
+                     else
+                        []
+                    )
                 ]
             , div [ css [ h_full ] ]
                 [ currentPage
@@ -94,7 +109,7 @@ appScaffolding menu currentPage =
 -- TODO Make an elm-review rule that formats these long css lists more nicely.
 
 
-genericPage header filler =
+genericPage label filler =
     div [ css [ Tw.bg_white ] ]
         [ div
             [ css
@@ -117,7 +132,7 @@ genericPage header filler =
                         , Tw.py_6
                         ]
                     ]
-                    [ text header ]
+                    [ text label ]
                 , filler
                 ]
             ]
@@ -145,8 +160,8 @@ debuggingPage errors =
 -- Page Helpers
 
 
-tMenu : Maybe msg -> Html msg
-tMenu testingMsg =
+header : Maybe msg -> Html msg
+header testingMsg =
     div
         [ css [ flex ] ]
         [ div [ css [ flex_shrink_0, flex, items_center ] ]
@@ -182,6 +197,32 @@ tMenu testingMsg =
         ]
 
 
+tMenu =
+    let
+        style =
+            {- Current: "bg-indigo-50 border-indigo-500 text-indigo-700", Default: "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800" -}
+            [ Tw.border_transparent
+            , Tw.text_red_600
+            , Tw.block
+            , Tw.pl_3
+            , Tw.pr_4
+            , Tw.py_2
+            , Tw.border_l_4
+            , Tw.text_base
+            , Tw.font_medium
+            ]
+    in
+    div
+        [ css [ Tw.pt_2, Tw.pb_3, Tw.space_y_1 ] ]
+        [ a [ Attr.href "#", css style ]
+            [ text "SERVER SETTINGS (careful!)" ]
+        , a [ Attr.href "#", css style ]
+            [ text "Toggle Debug" ]
+        , a [ Attr.href "#", css style ]
+            [ text "Reset Productions " ]
+        ]
+
+
 emptyTemplate =
     Html.text ""
 
@@ -190,3 +231,67 @@ appHeight =
     -- ios viewport tricky
     -- https://lukechannings.com/blog/2021-06-09-does-safari-15-fix-the-vh-bug/
     Attr.style "height" "calc(100% - 100px)"
+
+
+tHamburger : msg -> Html msg
+tHamburger toggleMsg =
+    div
+        [ css
+            [ Tw.neg_mr_2
+            , Tw.flex
+            , Tw.items_center
+            ]
+        ]
+        [ {- Menu button -}
+          button
+            [ Attr.type_ "button"
+            , css
+                [ Tw.bg_white
+                , Tw.inline_flex
+                , Tw.items_center
+                , Tw.justify_center
+                , Tw.p_2
+                , Tw.rounded_md
+                , Tw.text_gray_400
+                , Css.focus
+                    [ Tw.outline_none
+                    , Tw.ring_2
+                    , Tw.ring_offset_2
+                    , Tw.ring_indigo_500
+                    ]
+                , Css.hover
+                    [ Tw.text_gray_500
+                    , Tw.bg_gray_100
+                    ]
+                ]
+            , Attr.attribute "aria-controls" "mobile-menu"
+            , Attr.attribute "aria-expanded" "false"
+            , onClick toggleMsg
+            ]
+            [ span
+                [ css
+                    [ Tw.sr_only
+                    ]
+                ]
+                [ text "Open main menu" ]
+            , svg
+                [ SvgAttr.css
+                    [ Tw.block
+                    , Tw.h_6
+                    , Tw.w_6
+                    ]
+                , SvgAttr.fill "none"
+                , SvgAttr.viewBox "0 0 24 24"
+                , SvgAttr.stroke "currentColor"
+                , Attr.attribute "aria-hidden" "true"
+                ]
+                [ path
+                    [ SvgAttr.strokeLinecap "round"
+                    , SvgAttr.strokeLinejoin "round"
+                    , SvgAttr.strokeWidth "2"
+                    , SvgAttr.d "M4 6h16M4 12h16M4 18h16"
+                    ]
+                    []
+                ]
+            ]
+        ]

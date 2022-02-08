@@ -14,7 +14,7 @@ import Casting exposing (..)
 import Dict exposing (Dict)
 import Director
 import Html.Styled as Html exposing (..)
-import Interface exposing (appScaffolding, debuggingPage, genericPage, loadingPage, tMenu)
+import Interface exposing (appScaffolding, debuggingPage, genericPage, loadingPage)
 import List.Extra as List
 import TestScript exposing (testScript)
 
@@ -47,7 +47,11 @@ import TestScript exposing (testScript)
 -- Tauri?
 
 
-type Model
+type alias Model =
+    { menuOpen : Bool, state : State }
+
+
+type State
     = InitialLoading
     | Debugging (List String)
     | Testing Int
@@ -58,6 +62,7 @@ type Model
 
 type Msg
     = NoOp
+    | ToggleMenu
     | ActorMsg Actor.Msg
     | DirectorMsg Director.Msg
     | AdvanceInterfaceTestCase
@@ -83,20 +88,26 @@ initialModel : Model
 initialModel =
     -- initialModel = Testing 0
     -- To test, replace below with above
-    InitialLoading
+    { menuOpen = False, state = InitialLoading }
 
 
 update : Msg -> Model -> ( Model, PlatformCmd )
 update msg model =
-    case ( msg, model ) of
+    let
+        stateToModel state =
+            { model | state = state }
+    in
+    case ( msg, model.state ) of
         ( ActorMsg subMsg, Actor subModel ) ->
             Actor.update subMsg subModel
                 |> Tuple.mapFirst Actor
+                |> Tuple.mapFirst stateToModel
                 |> Tuple.mapSecond ActorPC
 
         ( DirectorMsg subMsg, Director subModel ) ->
             Director.update subMsg subModel
                 |> Tuple.mapFirst Director
+                |> Tuple.mapFirst stateToModel
                 |> Tuple.mapSecond DirectorPC
 
         ( AdvanceInterfaceTestCase, Testing i ) ->
@@ -105,15 +116,20 @@ update msg model =
                     modBy (List.length interfaceTestCases) (i + 1)
             in
             ( Testing newIndex, NoCmd )
+                |> Tuple.mapFirst stateToModel
 
         ( OnlyPlatformResponse response, m ) ->
             updateFromPlatform response m
+                |> Tuple.mapFirst stateToModel
+
+        ( ToggleMenu, _ ) ->
+            ( { model | menuOpen = not model.menuOpen }, NoCmd )
 
         ( _, _ ) ->
             ( model, NoCmd )
 
 
-updateFromPlatform : PlatformResponse -> Model -> ( Model, PlatformCmd )
+updateFromPlatform : PlatformResponse -> State -> ( State, PlatformCmd )
 updateFromPlatform response model =
     case ( response, model ) of
         -- Update
@@ -157,7 +173,7 @@ viewHelper : Maybe Msg -> Model -> Html Msg
 viewHelper testingMsg model =
     let
         currentPage =
-            case model of
+            case model.state of
                 Testing page ->
                     List.getAt page interfaceTestCases
                         |> Maybe.withDefault model
@@ -180,10 +196,13 @@ viewHelper testingMsg model =
                     Actor.view subModel
                         |> Html.map ActorMsg
 
-        menu =
-            tMenu testingMsg
+        config =
+            { menu = Interface.header testingMsg
+            , menuOpen = model.menuOpen
+            , toggleMsg = ToggleMenu
+            }
     in
-    appScaffolding menu currentPage
+    appScaffolding config currentPage
 
 
 doNothing : a -> Msg
@@ -210,3 +229,4 @@ interfaceTestCases =
     [ InitialLoading ]
         ++ List.map Director Director.interfaceTestCases
         ++ List.map Actor Actor.interfaceTestCases
+        |> List.map (\state -> { state = state, menuOpen = False })
