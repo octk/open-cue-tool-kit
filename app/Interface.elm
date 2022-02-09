@@ -39,10 +39,10 @@ import Tailwind.Utilities as Tw exposing (..)
 
 
 appScaffolding :
-    { menuOpen : Bool, menu : Html msg, toggleMsg : msg }
+    { menuOpen : Bool, menu : Html msg, toggleMsg : msg, resetProductionsMsg : msg }
     -> Html msg
     -> Html msg
-appScaffolding ({ menuOpen, menu, toggleMsg } as config) currentPage =
+appScaffolding ({ menuOpen, menu, toggleMsg, resetProductionsMsg } as config) currentPage =
     div
         []
         [ Css.Global.global globalStyles
@@ -85,7 +85,7 @@ appScaffolding ({ menuOpen, menu, toggleMsg } as config) currentPage =
                     ]
                 , div []
                     (if menuOpen then
-                        [ tMenu ]
+                        [ serverSettingsMenu resetProductionsMsg ]
 
                      else
                         []
@@ -197,7 +197,8 @@ header testingMsg =
         ]
 
 
-tMenu =
+serverSettingsMenu : msg -> Html msg
+serverSettingsMenu resetProductionsMsg =
     let
         style =
             {- Current: "bg-indigo-50 border-indigo-500 text-indigo-700", Default: "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800" -}
@@ -218,7 +219,7 @@ tMenu =
             [ text "SERVER SETTINGS (careful!)" ]
         , a [ Attr.href "#", css style ]
             [ text "Toggle Debug" ]
-        , a [ Attr.href "#", css style ]
+        , a [ Attr.href "#", css style, onClick resetProductionsMsg ]
             [ text "Reset Productions " ]
         ]
 

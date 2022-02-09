@@ -74,6 +74,7 @@ type ToBackend
     | JoinProduction String String
     | ShareProduction CastingChoices
     | AdvanceCue
+    | ResetProductions
 
 
 type BackendMsg

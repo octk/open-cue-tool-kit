@@ -76,6 +76,11 @@ updateFromFrontend sessionId clientId msg model =
         JoinProduction name id ->
             joinProductionHelper model sessionId name id
 
+        ResetProductions ->
+            ( { model | library = mapProductions (always Dict.empty) model.library }
+            , Cmd.none
+            )
+
         -- Director
         MakeInvitation script ->
             shareScript sessionId model script

@@ -67,6 +67,7 @@ type Msg
     | DirectorMsg Director.Msg
     | AdvanceInterfaceTestCase
     | OnlyPlatformResponse PlatformResponse
+    | ClickedResetProductions
 
 
 type PlatformResponse
@@ -80,6 +81,7 @@ type PlatformResponse
 type PlatformCmd
     = NoCmd
     | ClientInit
+    | ResetProductions
     | ActorPC Actor.PlatformCmd
     | DirectorPC Director.PlatformCmd
 
@@ -124,6 +126,9 @@ update msg model =
 
         ( ToggleMenu, _ ) ->
             ( { model | menuOpen = not model.menuOpen }, NoCmd )
+
+        ( ClickedResetProductions, _ ) ->
+            ( model, ResetProductions )
 
         ( _, _ ) ->
             ( model, NoCmd )
@@ -200,6 +205,7 @@ viewHelper testingMsg model =
             { menu = Interface.header testingMsg
             , menuOpen = model.menuOpen
             , toggleMsg = ToggleMenu
+            , resetProductionsMsg = ClickedResetProductions
             }
     in
     appScaffolding config currentPage

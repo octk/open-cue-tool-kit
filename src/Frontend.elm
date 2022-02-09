@@ -33,6 +33,9 @@ platformCmdTransform platformCmd =
         Client.ClientInit ->
             Lamdera.sendToBackend Types.ClientInit
 
+        Client.ResetProductions ->
+            Lamdera.sendToBackend Types.ResetProductions
+
         DirectorPC subCommand ->
             case subCommand of
                 Director.MakeInvitation script ->
