@@ -39,10 +39,10 @@ import Tailwind.Utilities as Tw exposing (..)
 
 
 appScaffolding :
-    { menuOpen : Bool, menu : Html msg, toggleMsg : msg, resetProductionsMsg : msg }
+    { menuOpen : Bool, menu : Html msg, toggleMsg : msg, resetProductionsMsg : msg, toggleDebugMsg : msg }
     -> Html msg
     -> Html msg
-appScaffolding ({ menuOpen, menu, toggleMsg, resetProductionsMsg } as config) currentPage =
+appScaffolding ({ menuOpen, menu, toggleMsg, resetProductionsMsg, toggleDebugMsg } as config) currentPage =
     div
         []
         [ Css.Global.global globalStyles
@@ -85,7 +85,7 @@ appScaffolding ({ menuOpen, menu, toggleMsg, resetProductionsMsg } as config) cu
                     ]
                 , div []
                     (if menuOpen then
-                        [ serverSettingsMenu resetProductionsMsg ]
+                        [ serverSettingsMenu resetProductionsMsg toggleDebugMsg ]
 
                      else
                         []
@@ -147,7 +147,7 @@ loadingPage =
 
 debuggingPage errors =
     pre [] [ text (String.join "\n" errors) ]
-        |> genericPage "Errors encountered"
+        |> genericPage "Server Logs"
 
 
 
@@ -197,8 +197,8 @@ header testingMsg =
         ]
 
 
-serverSettingsMenu : msg -> Html msg
-serverSettingsMenu resetProductionsMsg =
+serverSettingsMenu : msg -> msg -> Html msg
+serverSettingsMenu resetProductionsMsg toggleDebugMsg =
     let
         style =
             {- Current: "bg-indigo-50 border-indigo-500 text-indigo-700", Default: "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800" -}
@@ -217,7 +217,7 @@ serverSettingsMenu resetProductionsMsg =
         [ css [ Tw.pt_2, Tw.pb_3, Tw.space_y_1 ] ]
         [ a [ Attr.href "#", css style ]
             [ text "SERVER SETTINGS (careful!)" ]
-        , a [ Attr.href "#", css style ]
+        , a [ Attr.href "#", css style, onClick toggleDebugMsg ]
             [ text "Toggle Debug" ]
         , a [ Attr.href "#", css style, onClick resetProductionsMsg ]
             [ text "Reset Productions " ]

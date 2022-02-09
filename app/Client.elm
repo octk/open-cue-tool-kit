@@ -48,12 +48,15 @@ import TestScript exposing (testScript)
 
 
 type alias Model =
-    { menuOpen : Bool, state : State }
+    { menuOpen : Bool
+    , state : State
+    , logs : List String
+    , viewLogs : Bool
+    }
 
 
 type State
     = InitialLoading
-    | Debugging (List String)
     | Testing Int
     | Spectating
     | Director Director.Model
@@ -63,6 +66,7 @@ type State
 type Msg
     = NoOp
     | ToggleMenu
+    | ToggleDebug
     | ActorMsg Actor.Msg
     | DirectorMsg Director.Msg
     | AdvanceInterfaceTestCase
@@ -90,7 +94,11 @@ initialModel : Model
 initialModel =
     -- initialModel = Testing 0
     -- To test, replace below with above
-    { menuOpen = False, state = InitialLoading }
+    { menuOpen = False
+    , state = InitialLoading
+    , logs = [ "Initial client log entry." ]
+    , viewLogs = False
+    }
 
 
 update : Msg -> Model -> ( Model, PlatformCmd )
@@ -121,11 +129,13 @@ update msg model =
                 |> Tuple.mapFirst stateToModel
 
         ( OnlyPlatformResponse response, m ) ->
-            updateFromPlatform response m
-                |> Tuple.mapFirst stateToModel
+            updateFromPlatform response model
 
         ( ToggleMenu, _ ) ->
             ( { model | menuOpen = not model.menuOpen }, NoCmd )
+
+        ( ToggleDebug, _ ) ->
+            ( { model | viewLogs = not model.viewLogs }, NoCmd )
 
         ( ClickedResetProductions, _ ) ->
             ( model, ResetProductions )
@@ -134,36 +144,45 @@ update msg model =
             ( model, NoCmd )
 
 
-updateFromPlatform : PlatformResponse -> State -> ( State, PlatformCmd )
+updateFromPlatform : PlatformResponse -> Model -> ( Model, PlatformCmd )
 updateFromPlatform response model =
-    case ( response, model ) of
+    let
+        stateToModel state =
+            { model | state = state }
+    in
+    case ( response, model.state ) of
         -- Update
         ( ActorPR subResponse, Actor subModel ) ->
             Actor.updateFromPlatform subResponse subModel
                 |> Tuple.mapFirst Actor
+                |> Tuple.mapFirst stateToModel
                 |> Tuple.mapSecond ActorPC
 
         ( DirectorPR subResponse, Director subModel ) ->
             Director.updateFromPlatform subResponse subModel
                 |> Tuple.mapFirst Director
+                |> Tuple.mapFirst stateToModel
                 |> Tuple.mapSecond DirectorPC
 
         -- Init
         ( ActorPR subResponse, _ ) ->
             Actor.initialize subResponse
                 |> Tuple.mapFirst Actor
+                |> Tuple.mapFirst stateToModel
                 |> Tuple.mapSecond ActorPC
 
         ( DirectorPR subResponse, _ ) ->
             Director.initialize subResponse
                 |> Tuple.mapFirst Director
+                |> Tuple.mapFirst stateToModel
                 |> Tuple.mapSecond DirectorPC
 
         ( ReportErrors errors, _ ) ->
-            ( Debugging errors, NoCmd )
+            ( { model | logs = errors }, NoCmd )
 
         ( JoinedAsSpectator, _ ) ->
             ( Spectating, NoCmd )
+                |> Tuple.mapFirst stateToModel
 
         ( _, _ ) ->
             ( model, NoCmd )
@@ -178,34 +197,36 @@ viewHelper : Maybe Msg -> Model -> Html Msg
 viewHelper testingMsg model =
     let
         currentPage =
-            case model.state of
-                Testing page ->
-                    List.getAt page interfaceTestCases
-                        |> Maybe.withDefault model
-                        |> viewHelper (Just AdvanceInterfaceTestCase)
+            if model.viewLogs then
+                debuggingPage (indexLogs model.logs)
 
-                InitialLoading ->
-                    loadingPage
+            else
+                case model.state of
+                    Testing page ->
+                        List.getAt page interfaceTestCases
+                            |> Maybe.withDefault model
+                            |> viewHelper (Just AdvanceInterfaceTestCase)
 
-                Debugging errors ->
-                    debuggingPage errors
+                    InitialLoading ->
+                        loadingPage
 
-                Spectating ->
-                    genericPage "Spectating (show in progress)" (Html.text "")
+                    Spectating ->
+                        genericPage "Spectating (show in progress)" (Html.text "")
 
-                Director subModel ->
-                    Director.view subModel
-                        |> Html.map DirectorMsg
+                    Director subModel ->
+                        Director.view subModel
+                            |> Html.map DirectorMsg
 
-                Actor subModel ->
-                    Actor.view subModel
-                        |> Html.map ActorMsg
+                    Actor subModel ->
+                        Actor.view subModel
+                            |> Html.map ActorMsg
 
         config =
             { menu = Interface.header testingMsg
             , menuOpen = model.menuOpen
             , toggleMsg = ToggleMenu
             , resetProductionsMsg = ClickedResetProductions
+            , toggleDebugMsg = ToggleDebug
             }
     in
     appScaffolding config currentPage
@@ -214,6 +235,21 @@ viewHelper testingMsg model =
 doNothing : a -> Msg
 doNothing =
     always (OnlyPlatformResponse NoResponse)
+
+
+indexLogs : List String -> List String
+indexLogs logs =
+    let
+        len =
+            List.length logs
+    in
+    List.indexedMap
+        (\i log ->
+            String.fromInt (len - i)
+                ++ ": "
+                ++ log
+        )
+        logs
 
 
 
@@ -235,4 +271,11 @@ interfaceTestCases =
     [ InitialLoading ]
         ++ List.map Director Director.interfaceTestCases
         ++ List.map Actor Actor.interfaceTestCases
-        |> List.map (\state -> { state = state, menuOpen = False })
+        |> List.map
+            (\state ->
+                { state = state
+                , menuOpen = False
+                , viewLogs = False
+                , logs = []
+                }
+            )

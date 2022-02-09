@@ -50,7 +50,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { library = EmptyLibrary
       , errorCount = Dict.empty
-      , errorLog = []
+      , log = []
       , staleTimer = TimerNotSet
       , s3UrlAtLastFetch = Nothing
       }
@@ -81,6 +81,7 @@ updateFromFrontend sessionId clientId msg model =
             ( { model | library = mapProductions (always Dict.empty) model.library }
             , Cmd.none
             )
+                |> logging "Productions reset by client"
 
         -- Director
         MakeInvitation script ->
@@ -134,7 +135,7 @@ update msg model =
             case model.library of
                 Updating id progress ->
                     ( { model
-                        | errorLog = ("Fetching script " ++ name) :: model.errorLog
+                        | log = ("Fetching script " ++ name) :: model.log
                         , library = Updating id { progress | fetching = True }
                       }
                     , fetchScript name
@@ -198,6 +199,7 @@ clientInitHelper : SessionId -> Model -> ( Model, Cmd Msg )
 clientInitHelper sessionId model =
     categorizeClient sessionId model
         |> newClientAction sessionId model
+        |> logging ("Client Joined (" ++ sessionId ++ ")")
 
 
 categorizeClient : SessionId -> Model -> NewClient
@@ -281,34 +283,31 @@ fetchLibraryHelper : SessionId -> Model -> ( Model, Cmd Msg )
 fetchLibraryHelper sessionId model =
     let
         newModel =
-            { model
-                | errorLog = "Library is empty. Attempting to fetch plays..." :: model.errorLog
-                , s3UrlAtLastFetch = Just Env.s3Url
-            }
+            { model | s3UrlAtLastFetch = Just Env.s3Url }
 
         scriptIndexDecoder =
             Json.Decode.list Json.Decode.string
 
-        fetchNewLibrary =
-            ( newModel
-            , Cmd.batch
-                [ Http.get
-                    { url = Env.s3Url ++ "play_list.json"
-                    , expect = Http.expectJson (GotScriptList sessionId) scriptIndexDecoder
-                    }
-                , Lamdera.broadcast (ReportErrors newModel.errorLog)
-                ]
-            )
+        fetchRequest =
+            Http.get
+                { url = Env.s3Url ++ "play_list.json"
+                , expect =
+                    Http.expectJson
+                        (GotScriptList sessionId)
+                        scriptIndexDecoder
+                }
     in
     case model.library of
         FullLibrary lib ->
-            fetchNewLibrary
+            ( newModel, fetchRequest )
+                |> logging "New s3Url detected. Attempting to fetch plays..."
 
         EmptyLibrary ->
-            fetchNewLibrary
+            ( newModel, fetchRequest )
+                |> logging "Library is empty. Attempting to fetch plays..."
 
         Updating _ _ ->
-            ( model, Lamdera.broadcast (ReportErrors model.errorLog) )
+            ( model, Cmd.none )
 
 
 shareScript : SessionId -> Model -> Script -> ( Model, Cmd Msg )
@@ -384,16 +383,12 @@ gotScriptListHelper model sessionId response =
             )
 
         Err e ->
-            let
-                formatError =
-                    "When fetching play_list.json, encountered " ++ errorToString e ++ "\n"
-
-                newModel =
-                    { model | errorLog = formatError :: model.errorLog }
-            in
-            ( newModel
-            , Lamdera.broadcast (ReportErrors newModel.errorLog)
-            )
+            ( model, Cmd.none )
+                |> logging
+                    ("When fetching play_list.json, encountered "
+                        ++ errorToString e
+                        ++ "\n"
+                    )
 
 
 fetchedScriptHelper : Model -> String -> Script -> ( Model, Cmd Msg )
@@ -410,7 +405,7 @@ fetchedScriptHelper model name script =
             in
             ( if Set.size progress.notAdded == 0 then
                 { model
-                    | errorLog = "Finished loading library" :: model.errorLog
+                    | log = "Finished loading library" :: model.log
                     , library =
                         FullLibrary
                             { titles = Set.toList progress.added
@@ -435,9 +430,6 @@ fetchedScriptHelper model name script =
 
 errorHelper model name e =
     let
-        formatError =
-            "When fetching " ++ name ++ ", encountered " ++ errorToString e ++ "\n"
-
         incrementError maybeCount =
             Maybe.map ((+) 1) maybeCount
                 |> Maybe.withDefault 0
@@ -449,16 +441,20 @@ errorHelper model name e =
 
         newModel =
             { model
-                | errorLog = formatError :: model.errorLog
-                , errorCount = Dict.update name incrementError model.errorCount
+                | errorCount = Dict.update name incrementError model.errorCount
             }
     in
     if errors >= 1 then
-        ---- We stop asking for a script after 5 failures
-        -- Change to 1 since overloading
-        ( { newModel | library = EmptyLibrary }
-        , Lamdera.broadcast (ReportErrors newModel.errorLog)
-        )
+        ---- We stop asking for a script after 1 failure
+        -- Change to 1 from 5 which overwhelmed server
+        ( { newModel | library = EmptyLibrary }, Cmd.none )
+            |> logging
+                ("When fetching "
+                    ++ name
+                    ++ ", encountered "
+                    ++ errorToString e
+                    ++ "\n"
+                )
 
     else
         ( newModel, Cmd.none )
@@ -500,18 +496,15 @@ checkTimerHelper model time =
 
                 staleTimer =
                     Time.posixToMillis timer + limitMillis
-
-                newErrorLog =
-                    "Ending production which ran for 10 minutes without any actions" :: model.errorLog
             in
             if now > staleTimer then
                 ( { model
                     | staleTimer = TimerNotSet
-                    , errorLog = newErrorLog
                     , library = mapProductions (\_ -> Dict.empty) model.library
                   }
-                , Lamdera.broadcast (ReportErrors newErrorLog)
+                , Cmd.none
                 )
+                    |> logging "Ending production which ran for 10 minutes without any actions"
 
             else
                 ( model, Cmd.none )
@@ -610,3 +603,10 @@ mapProductions f library =
 
         _ ->
             library
+
+
+logging : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+logging log ( model, cmd ) =
+    ( { model | log = log :: model.log }
+    , Cmd.batch [ cmd, Lamdera.broadcast (ReportErrors (log :: model.log)) ]
+    )

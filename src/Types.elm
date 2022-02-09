@@ -21,7 +21,7 @@ type alias FrontendModel =
 type alias BackendModel =
     { library : State
     , errorCount : Dict String Int
-    , errorLog : List String
+    , log : List String
     , staleTimer : Timer
     , s3UrlAtLastFetch : Maybe String
     }
