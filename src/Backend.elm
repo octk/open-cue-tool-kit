@@ -52,6 +52,7 @@ init =
       , errorCount = Dict.empty
       , errorLog = []
       , staleTimer = TimerNotSet
+      , s3UrlAtLastFetch = Nothing
       }
     , Cmd.none
     )
@@ -264,9 +265,13 @@ newClientAction sessionId model client =
             ( model, Lamdera.sendToFrontend sessionId (LoadLibrary scripts) )
 
         NoActiveProduction scripts ->
-            ( model
-            , Lamdera.sendToFrontend sessionId (LoadLibrary scripts)
-            )
+            if model.s3UrlAtLastFetch == Just Env.s3Url then
+                ( model
+                , Lamdera.sendToFrontend sessionId (LoadLibrary scripts)
+                )
+
+            else
+                fetchLibraryHelper sessionId model
 
         Spectator ->
             ( model, Lamdera.sendToFrontend sessionId JoinedAsSpectator )
@@ -274,18 +279,17 @@ newClientAction sessionId model client =
 
 fetchLibraryHelper : SessionId -> Model -> ( Model, Cmd Msg )
 fetchLibraryHelper sessionId model =
-    case model.library of
-        FullLibrary lib ->
-            ( model, Cmd.none )
+    let
+        newModel =
+            { model
+                | errorLog = "Library is empty. Attempting to fetch plays..." :: model.errorLog
+                , s3UrlAtLastFetch = Just Env.s3Url
+            }
 
-        EmptyLibrary ->
-            let
-                newModel =
-                    { model | errorLog = "Library is empty. Attempting to fetch plays..." :: model.errorLog }
+        scriptIndexDecoder =
+            Json.Decode.list Json.Decode.string
 
-                scriptIndexDecoder =
-                    Json.Decode.list Json.Decode.string
-            in
+        fetchNewLibrary =
             ( newModel
             , Cmd.batch
                 [ Http.get
@@ -295,6 +299,13 @@ fetchLibraryHelper sessionId model =
                 , Lamdera.broadcast (ReportErrors newModel.errorLog)
                 ]
             )
+    in
+    case model.library of
+        FullLibrary lib ->
+            fetchNewLibrary
+
+        EmptyLibrary ->
+            fetchNewLibrary
 
         Updating _ _ ->
             ( model, Lamdera.broadcast (ReportErrors model.errorLog) )

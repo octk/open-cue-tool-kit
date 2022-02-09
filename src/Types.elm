@@ -23,6 +23,7 @@ type alias BackendModel =
     , errorCount : Dict String Int
     , errorLog : List String
     , staleTimer : Timer
+    , s3UrlAtLastFetch : Maybe String
     }
 
 
