@@ -239,7 +239,7 @@ cueingPage cueingAction =
                             text character
 
                         ShowOver ->
-                            text ""
+                            text "That's all Folks! The End"
                     ]
                 ]
             ]
@@ -248,7 +248,27 @@ cueingPage cueingAction =
             ]
             [ case cueingAction of
                 ShowOver ->
-                    text ""
+                    div
+                        [ css
+                            [ max_w_7xl
+                            , mx_auto
+                            , Bp.lg [ px_8 ]
+                            , Bp.sm [ px_6 ]
+                            , flex
+                            , flex_col
+                            , h_full
+                            ]
+                        ]
+                        [ div
+                            [ css
+                                [ pt_4
+                                , mx_4
+                                ]
+                            ]
+                            [ text "(take a bow!)"
+                            , img [ Attr.src "/bow.svg", Attr.alt "Shakespeare bowing" ] []
+                            ]
+                        ]
 
                 Listening { nextParts } ->
                     div
