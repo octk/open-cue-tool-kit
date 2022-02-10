@@ -93,10 +93,10 @@ type PlatformCmd
 initialModel : Model
 initialModel =
     { menuOpen = False
-    , state = Testing 3
 
+    --, state = Testing 3
     -- To test, replace below with above
-    --state = InitialLoading
+    , state = InitialLoading
     , logs = [ "Initial client log entry." ]
     , viewLogs = False
     }
@@ -121,15 +121,10 @@ update msg model =
                 |> Tuple.mapFirst stateToModel
                 |> Tuple.mapSecond DirectorPC
 
-        ( AdvanceInterfaceTestCase, _ ) ->
+        ( AdvanceInterfaceTestCase, Testing i ) ->
             let
                 newIndex =
-                    case model.state of
-                        Testing i ->
-                            modBy (List.length interfaceTestCases) (i + 1)
-
-                        a ->
-                            Debug.todo ("Got invalid state of " ++ Debug.toString a ++ " while testing!")
+                    modBy (List.length interfaceTestCases) (i + 1)
             in
             ( Testing newIndex, NoCmd )
                 |> Tuple.mapFirst stateToModel
