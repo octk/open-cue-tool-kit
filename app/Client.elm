@@ -92,10 +92,11 @@ type PlatformCmd
 
 initialModel : Model
 initialModel =
-    -- initialModel = Testing 0
-    -- To test, replace below with above
     { menuOpen = False
-    , state = InitialLoading
+    , state = Testing 3
+
+    -- To test, replace below with above
+    --state = InitialLoading
     , logs = [ "Initial client log entry." ]
     , viewLogs = False
     }
@@ -120,13 +121,22 @@ update msg model =
                 |> Tuple.mapFirst stateToModel
                 |> Tuple.mapSecond DirectorPC
 
-        ( AdvanceInterfaceTestCase, Testing i ) ->
+        ( AdvanceInterfaceTestCase, _ ) ->
             let
                 newIndex =
-                    modBy (List.length interfaceTestCases) (i + 1)
+                    case model.state of
+                        Testing i ->
+                            modBy (List.length interfaceTestCases) (i + 1)
+
+                        a ->
+                            Debug.todo ("Got invalid state of " ++ Debug.toString a ++ " while testing!")
             in
             ( Testing newIndex, NoCmd )
                 |> Tuple.mapFirst stateToModel
+
+        ( OnlyPlatformResponse response, Testing _ ) ->
+            -- Ignore platform when testing
+            ( model, NoCmd )
 
         ( OnlyPlatformResponse response, m ) ->
             updateFromPlatform response model
@@ -188,39 +198,27 @@ updateFromPlatform response model =
             ( model, NoCmd )
 
 
+type alias ModuleInjections msg =
+    { menu : Html msg
+    , menuOpen : Bool
+    , toggleMsg : msg
+    , resetProductionsMsg : msg
+    , toggleDebugMsg : msg
+    }
+
+
 view : Model -> Html Msg
-view =
-    viewHelper Nothing
+view model =
+    let
+        ( config, currentPage ) =
+            viewHelper Nothing model
+    in
+    appScaffolding config currentPage
 
 
-viewHelper : Maybe Msg -> Model -> Html Msg
+viewHelper : Maybe Msg -> Model -> ( ModuleInjections Msg, Html Msg )
 viewHelper testingMsg model =
     let
-        currentPage =
-            if model.viewLogs then
-                debuggingPage (indexLogs model.logs)
-
-            else
-                case model.state of
-                    Testing page ->
-                        List.getAt page interfaceTestCases
-                            |> Maybe.withDefault model
-                            |> viewHelper (Just AdvanceInterfaceTestCase)
-
-                    InitialLoading ->
-                        loadingPage
-
-                    Spectating ->
-                        genericPage "Spectating (show in progress)" (Html.text "")
-
-                    Director subModel ->
-                        Director.view subModel
-                            |> Html.map DirectorMsg
-
-                    Actor subModel ->
-                        Actor.view subModel
-                            |> Html.map ActorMsg
-
         config =
             { menu = Interface.header testingMsg
             , menuOpen = model.menuOpen
@@ -229,7 +227,33 @@ viewHelper testingMsg model =
             , toggleDebugMsg = ToggleDebug
             }
     in
-    appScaffolding config currentPage
+    if model.viewLogs then
+        ( config, debuggingPage (indexLogs model.logs) )
+
+    else
+        case model.state of
+            Testing page ->
+                List.getAt page interfaceTestCases
+                    |> Maybe.withDefault model
+                    |> viewHelper (Just AdvanceInterfaceTestCase)
+
+            InitialLoading ->
+                ( config, loadingPage )
+
+            Spectating ->
+                ( config, genericPage "Spectating (show in progress)" (Html.text "") )
+
+            Director subModel ->
+                ( config
+                , Director.view subModel
+                    |> Html.map DirectorMsg
+                )
+
+            Actor subModel ->
+                ( config
+                , Actor.view subModel
+                    |> Html.map ActorMsg
+                )
 
 
 doNothing : a -> Msg

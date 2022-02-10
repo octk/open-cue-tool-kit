@@ -223,24 +223,39 @@ cueingPage cueingAction =
                     , Bp.sm [ px_6 ]
                     ]
                 ]
-                [ h1
-                    [ css
-                        [ text_3xl
-                        , font_bold
-                        , leading_tight
-                        , text_gray_900
-                        ]
-                    ]
-                    [ case cueingAction of
-                        Listening { speaker } ->
-                            text ("(" ++ speaker ++ " speaking)")
+                [ case cueingAction of
+                    Listening { speaker } ->
+                        h1
+                            [ css
+                                [ text_3xl
+                                , font_bold
+                                , leading_tight
+                                , text_gray_900
+                                ]
+                            ]
+                            [ text ("(" ++ speaker ++ " speaking)") ]
 
-                        Speaking { character } ->
-                            text character
+                    Speaking { character } ->
+                        h1
+                            [ css
+                                [ text_3xl
+                                , font_bold
+                                , leading_tight
+                                , text_gray_900
+                                ]
+                            ]
+                            [ text character ]
 
-                        ShowOver ->
-                            text "That's all Folks! The End"
-                    ]
+                    ShowOver ->
+                        h1
+                            [ css
+                                [ text_3xl
+                                , font_bold
+                                , leading_tight
+                                , text_gray_900
+                                ]
+                            ]
+                            [ text "That's all Folks! The End" ]
                 ]
             ]
         , main_
@@ -265,8 +280,7 @@ cueingPage cueingAction =
                                 , mx_4
                                 ]
                             ]
-                            [ text "(take a bow!)"
-                            , img [ Attr.src "/bow.svg", Attr.alt "Shakespeare bowing" ] []
+                            [ img [ Attr.src "/bow.svg", Attr.alt "Shakespeare bowing" ] []
                             ]
                         ]
 
@@ -504,6 +518,12 @@ interfaceTestCases =
         { script = testScript2
         , casting = Casting.castByLineFrequency testScript2.lines [ "Jeff" ] -- Listening
         , lineNumber = 0
+        , name = ""
+        }
+    , Cueing
+        { script = testScript2
+        , casting = Casting.castByLineFrequency testScript2.lines [ "Jeff" ] -- Over
+        , lineNumber = 100000000
         , name = ""
         }
     ]
