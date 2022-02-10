@@ -116,14 +116,14 @@ view :
     -> StaticPayload Data RouteParams
     -> View Msg
 view maybeUrl sharedModel model static =
-    { title = "Theater Maker DAO"
-    , body = [ landingPage ]
-
-    --List.map toUnstyled
-    --    [ warning
-    --    , todo model.collapsed
-    --    , template static
-    --    ]
+    { title = "CueCannon"
+    , body =
+        --[ landingPage ]
+        List.map toUnstyled
+            [ warning
+            , todo model.collapsed
+            , template static
+            ]
     }
 
 
