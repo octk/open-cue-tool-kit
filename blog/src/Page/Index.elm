@@ -120,58 +120,9 @@ view maybeUrl sharedModel model static =
     , body =
         --[ landingPage ]
         List.map toUnstyled
-            [ warning
-            , todo model.collapsed
-            , template static
+            [ template static
             ]
     }
-
-
-todoList =
-    """
-[x] Register domain name
-[ ] Attach domain name (via fleek host)
-[ ] Design Landing page (Images? Logo?)
-[ ] Make discord
-[ ] Make email
-[ ] cuecannon landing page
-[ ] Calendar General meeting?
-[ ] Calendar cuecannon meeting?
-[ ] Calendar study group?
-[ ] Plan POAPs?
-"""
-
-
-warning =
-    div
-        [ css
-            [ Tw.bg_red_600
-            , Tw.font_medium
-            , Tw.text_white
-            , Tw.w_full
-            , Tw.text_center
-            ]
-        ]
-        [ text "🚧 🚧 Work in Progress; do not share :) 🚧 🚧" ]
-
-
-todo collapsed =
-    div
-        [ css
-            [ Tw.bg_red_600
-            , Tw.font_medium
-            , Tw.text_white
-            , Tw.w_full
-            , Tw.whitespace_pre
-            ]
-        , onClick ToggleTodo
-        ]
-        (if collapsed then
-            [ text "Todo" ]
-
-         else
-            [ text todoList ]
-        )
 
 
 template static =
@@ -216,8 +167,7 @@ template static =
                     ]
                     [ div
                         [ css
-                            [ Tw.hidden
-                            , Tw.max_w_md
+                            [ Tw.max_w_md
                             , Tw.leading_loose
                             , Tw.tracking_tight
                             , Bp.md
@@ -237,7 +187,7 @@ template static =
                                     ]
                                 ]
                             ]
-                            [ text "Previous Posts" ]
+                            [ img [ alt "logo", src "/bow.svg" ] [] ]
                         , ul
                             [ css
                                 [ Tw.flex
@@ -252,27 +202,6 @@ template static =
                                     , class "nav"
                                     ]
                                     [ text "Previous blog posts links" ]
-                                ]
-                            , li []
-                                [ a
-                                    [ Attr.href "#"
-                                    , class "nav"
-                                    ]
-                                    [ text "A diam sollicitudin tempor id eue" ]
-                                ]
-                            , li []
-                                [ a
-                                    [ Attr.href "#"
-                                    , class "nav"
-                                    ]
-                                    [ text "Lectus vestibulum mattis ullamcorper velit sed ullamcorper" ]
-                                ]
-                            , li []
-                                [ a
-                                    [ Attr.href "#"
-                                    , class "nav"
-                                    ]
-                                    [ text "Pulvinar etiam non quam lacus suspendisse faucibus" ]
                                 ]
                             ]
                         , a
