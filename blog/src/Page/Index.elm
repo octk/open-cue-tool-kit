@@ -204,16 +204,6 @@ template static =
                                     [ text "Previous blog posts links" ]
                                 ]
                             ]
-                        , a
-                            [ Attr.href "#"
-                            , css
-                                [ Tw.font_bold
-                                , Css.hover
-                                    [ Tw.font_bold
-                                    ]
-                                ]
-                            ]
-                            [ text "more..." ]
                         ]
                     ]
                 , div
@@ -300,19 +290,6 @@ template static =
                                         ]
                                     ]
                                     [ text "Calendar" ]
-                                ]
-                            , li []
-                                [ a
-                                    [ Attr.href "#"
-                                    , class "nav"
-                                    , css
-                                        [ Tw.mx_2
-                                        , Bp.md
-                                            [ Tw.mx_0
-                                            ]
-                                        ]
-                                    ]
-                                    [ text "Discord" ]
                                 ]
                             ]
                         ]
