@@ -196,13 +196,13 @@ template static =
                                 , Tw.flex_col
                                 ]
                             ]
-                            [ li []
-                                [ a
-                                    [ Attr.href "#"
-                                    , class "nav"
-                                    ]
-                                    [ text "Previous blog posts links" ]
-                                ]
+                            [--li []
+                             --  [ a
+                             --      [ Attr.href "#"
+                             --      , class "nav"
+                             --      ]
+                             --      [ text "Previous blog posts links" ]
+                             --  ]
                             ]
                         ]
                     ]
@@ -244,17 +244,17 @@ template static =
                                 ]
                             ]
                         ]
-                        [ p
-                            [ css
-                                [ Tw.font_bold
-                                , Tw.my_4
-                                , Bp.md
-                                    [ Tw.my_12
-                                    ]
-                                ]
-                            ]
-                            [ text "Contact" ]
-                        , ul
+                        [ --p
+                          --  [ css
+                          --      [ Tw.font_bold
+                          --      , Tw.my_4
+                          --      , Bp.md
+                          --          [ Tw.my_12
+                          --          ]
+                          --      ]
+                          --  ]
+                          --  [ text "Contact" ],
+                          ul
                             [ css
                                 [ Tw.flex
                                 , Tw.flex_wrap
