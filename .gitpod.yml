@@ -1,0 +1,20 @@
+ports:
+  - port: 8000
+    onOpen: notify
+
+tasks:
+  - name: lamdera live
+    init: |
+      mkdir /workspace/.bin
+      curl https://static.lamdera.com/bin/linux/lamdera -o /workspace/.bin/lamdera
+      chmod a+x /workspace/.bin/lamdera
+      npm install
+      gp sync-done npminstall
+    command: |
+      export PATH="/workspace/.bin:$PATH"
+      yes | sudo apt install libncurses5
+      lamdera live
+    
+vscode:
+  extensions:
+    - "elmtooling.elm-ls-vscode"
