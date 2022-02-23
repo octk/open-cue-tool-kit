@@ -1,6 +1,5 @@
 module Types exposing (..)
 
-import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Casting exposing (CastingChoices)
 import Client exposing (Model, Msg(..))
@@ -9,7 +8,6 @@ import Http
 import Lamdera exposing (ClientId)
 import Set
 import Time
-import Url exposing (Url)
 
 
 type alias FrontendModel =

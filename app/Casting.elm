@@ -188,11 +188,11 @@ castByLineFrequency lines actors =
             Maybe.map (\x -> Just (x + 1)) line
                 |> Maybe.withDefault (Just 0)
 
-        countLines { speaker, line } countsByPartSoFar =
+        countLines { speaker } countsByPartSoFar =
             Dict.update speaker countLinesHelper countsByPartSoFar
     in
     Dict.toList countsByPart
-        |> List.sortBy (\( character, charCount ) -> -charCount)
+        |> List.sortBy (\( _, charCount ) -> -charCount)
         |> List.foldl castPart []
 
 

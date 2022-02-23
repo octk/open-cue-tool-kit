@@ -11,12 +11,10 @@ module Client exposing
 
 import Actor
 import Casting exposing (..)
-import Dict exposing (Dict)
 import Director
 import Html.Styled as Html exposing (..)
 import Interface exposing (appScaffolding, debuggingPage, genericPage, loadingPage)
 import List.Extra as List
-import TestScript exposing (testScript)
 
 
 
@@ -129,11 +127,11 @@ update msg model =
             ( Testing newIndex, NoCmd )
                 |> Tuple.mapFirst stateToModel
 
-        ( OnlyPlatformResponse response, Testing _ ) ->
+        ( OnlyPlatformResponse _, Testing _ ) ->
             -- Ignore platform when testing
             ( model, NoCmd )
 
-        ( OnlyPlatformResponse response, m ) ->
+        ( OnlyPlatformResponse response, _ ) ->
             updateFromPlatform response model
 
         ( ToggleMenu, _ ) ->
@@ -287,8 +285,8 @@ indexLogs logs =
 
 interfaceTestCases : List Model
 interfaceTestCases =
-    [ InitialLoading ]
-        ++ List.map Director Director.interfaceTestCases
+    InitialLoading 
+        :: List.map Director Director.interfaceTestCases
         ++ List.map Actor Actor.interfaceTestCases
         |> List.map
             (\state ->

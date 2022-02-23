@@ -2,21 +2,13 @@ module Director exposing (Actor, CastingDetails, ManualChoice(..), Model(..), Ms
 
 import Casting exposing (..)
 import Css
-import Css.Global
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes as Attr exposing (css)
 import Html.Styled.Events as Events exposing (onClick)
 import Interface exposing (appHeight, emptyTemplate, genericPage, loadingPage)
-import Loading
-    exposing
-        ( LoaderType(..)
-        , defaultConfig
-        , render
-        )
+import Loading exposing ( LoaderType(..))
 import QRCode
 import Svg.Attributes as SvgA
-import Svg.Styled as Svg exposing (path, svg)
-import Svg.Styled.Attributes as SvgAttr
 import Tailwind.Breakpoints as Bp
 import Tailwind.Utilities as Tw exposing (..)
 import TestScript exposing (testScript, testScript2)
@@ -73,7 +65,7 @@ view model =
         ShowIsRunning ->
             genericPage "Show is running" (Html.text "")
 
-
+browsingPage : List { title : String, lines : List { speaker : String, line : String, title : String, part : String } } -> Html Msg
 browsingPage scripts =
     div [ css [ overflow_y_scroll ], appHeight ]
         [ ul
@@ -99,6 +91,7 @@ browsingPage scripts =
         ]
 
 
+castingPage : { a | casting : CastingChoices, manualCasting : Maybe ManualChoice, autocast : Bool, host : Maybe String } -> Html Msg
 castingPage { casting, manualCasting, autocast, host } =
     let
         actorsPresent =
@@ -519,6 +512,7 @@ castingModal currentCasting newChoice =
         ]
 
 
+alreadyCastPartsAndActors : Bool -> CastingChoices -> List (Html Msg)
 alreadyCastPartsAndActors autocast casting =
     castParts casting
         |> List.map
@@ -534,9 +528,9 @@ alreadyCastPartsAndActors autocast casting =
         |> List.map
             (\( part, actor ) ->
                 li
-                    ([ css [ bg_white ]
-                     ]
-                        ++ (if autocast then
+                    ( css [ bg_white ]
+                     
+                        :: (if autocast then
                                 []
 
                             else
@@ -588,14 +582,14 @@ alreadyCastPartsAndActors autocast casting =
             )
 
 
+yetUncastActors : Bool -> CastingChoices -> List (Html Msg)
 yetUncastActors autocast casting =
     uncastActors casting
         |> List.map
             (\actor ->
                 li
-                    ([ css [ bg_white ]
-                     ]
-                        ++ (if autocast then
+                    ( css [ bg_white ]
+                        :: (if autocast then
                                 []
 
                             else
@@ -655,14 +649,15 @@ yetUncastActors autocast casting =
             )
 
 
+yetUncastParts : Bool -> CastingChoices -> List (Html Msg)
 yetUncastParts autocast casting =
     uncastParts casting
         |> List.map
             (\part ->
                 li
-                    ([ css [ bg_white ]
-                     ]
-                        ++ (if autocast then
+                    ( css [ bg_white ]
+                     
+                        :: (if autocast then
                                 []
 
                             else
@@ -722,6 +717,7 @@ yetUncastParts autocast casting =
             )
 
 
+castingSwitch : Bool -> List (Html Msg)
 castingSwitch autocast =
     [ li
         [ css
@@ -955,6 +951,7 @@ castHelper actor part model =
     ( mapCasting cast model, NoCmd )
 
 
+toggleAutocastHelper : Model -> Model
 toggleAutocastHelper model =
     let
         recast ({ casting, script, autocast } as details) =
@@ -971,7 +968,7 @@ toggleAutocastHelper model =
 
 
 actorJoinedHelper : String -> String -> CastingDetails -> CastingDetails
-actorJoinedHelper name actorClientId details =
+actorJoinedHelper name _ details =
     let
         currentActors =
             allActors details.casting
@@ -994,6 +991,7 @@ actorJoinedHelper name actorClientId details =
     }
 
 
+interfaceTestCases : List Model
 interfaceTestCases =
     [ {- This example is a basic casting example with a simple script and actor set. -}
       Casting

@@ -1,6 +1,7 @@
 module TestScript exposing (testScript, testScript2)
 
 
+testScript : List { line : String, speaker : String, title : String, part : String }
 testScript =
     [ { line = ""
       , speaker = "Hannah"
@@ -725,6 +726,7 @@ testScript =
     ]
 
 
+testScript2 : { title : String, lines : List { speaker : String, line : String, title : String, part : String } }
 testScript2 =
     { title = "Hamlet"
     , lines =

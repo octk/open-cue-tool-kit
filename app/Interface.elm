@@ -13,15 +13,12 @@ import Css
 import Css.Global
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes as Attr exposing (css)
-import Html.Styled.Events as Events exposing (onClick)
+import Html.Styled.Events exposing (onClick)
 import Loading
     exposing
         ( LoaderType(..)
         , defaultConfig
-        , render
         )
-import QRCode
-import Svg.Attributes as SvgA
 import Svg.Styled as Svg exposing (path, svg)
 import Svg.Styled.Attributes as SvgAttr
 import Tailwind.Breakpoints as Bp
@@ -42,7 +39,7 @@ appScaffolding :
     { menuOpen : Bool, menu : Html msg, toggleMsg : msg, resetProductionsMsg : msg, toggleDebugMsg : msg }
     -> Html msg
     -> Html msg
-appScaffolding ({ menuOpen, menu, toggleMsg, resetProductionsMsg, toggleDebugMsg } as config) currentPage =
+appScaffolding { menuOpen, menu, toggleMsg, resetProductionsMsg, toggleDebugMsg } currentPage =
     div
         []
         [ Css.Global.global globalStyles
@@ -109,6 +106,7 @@ appScaffolding ({ menuOpen, menu, toggleMsg, resetProductionsMsg, toggleDebugMsg
 -- TODO Make an elm-review rule that formats these long css lists more nicely.
 
 
+genericPage : String -> Html msg -> Html msg
 genericPage label filler =
     div [ css [ Tw.bg_white ] ]
         [ div
@@ -139,12 +137,14 @@ genericPage label filler =
         ]
 
 
+loadingPage : Html msg
 loadingPage =
     Loading.render Spinner { defaultConfig | color = "#4F46E5" } Loading.On
         |> Html.fromUnstyled
         |> genericPage "Loading"
 
 
+debuggingPage : List String -> Html msg
 debuggingPage errors =
     pre [] [ text (String.join "\n" errors) ]
         |> genericPage "Server Logs"
@@ -224,10 +224,12 @@ serverSettingsMenu resetProductionsMsg toggleDebugMsg =
         ]
 
 
+emptyTemplate : Html msg
 emptyTemplate =
     Html.text ""
 
 
+appHeight : Attribute msg
 appHeight =
     -- ios viewport tricky
     -- https://lukechannings.com/blog/2021-06-09-does-safari-15-fix-the-vh-bug/

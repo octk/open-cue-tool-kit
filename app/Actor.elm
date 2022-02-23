@@ -459,7 +459,7 @@ updateFromPlatform response model =
             , NoCmd
             )
 
-incrementLineNumberHelper : Model -> Html Msg
+incrementLineNumberHelper : Model -> (Model, PlatformCmd)
 incrementLineNumberHelper model =
     case model of
         Cueing details ->

@@ -6,8 +6,6 @@ import Browser.Navigation as Nav
 import Client exposing (Msg(..), PlatformCmd(..), PlatformResponse(..))
 import Director
 import Env
-import Html
-import Html.Attributes as Attr
 import Html.Styled as Html exposing (toUnstyled)
 import Lamdera
 import Task
@@ -25,6 +23,7 @@ import Url
 -- mapped in these functions
 
 
+platformCmdTransform : PlatformCmd -> Cmd msg
 platformCmdTransform platformCmd =
     case platformCmd of
         Client.NoCmd ->
@@ -92,7 +91,8 @@ updateFromBackend msg model =
             ( model, relayPlatformResponse JoinedAsSpectator )
 
 
-subscriptions m =
+subscriptions : a -> Sub Msg
+subscriptions _ =
     Sub.none
         |> Sub.map onlyPlatformMessage
 
@@ -139,6 +139,7 @@ onlyPlatformMessage msg =
             OnlyPlatformResponse NoResponse
 
 
+app : { init : Lamdera.Url -> Nav.Key -> (Types.FrontendModel, Cmd Msg), view : Types.FrontendModel -> Browser.Document Msg, update : Msg -> Types.FrontendModel -> (Types.FrontendModel, Cmd Msg), updateFromBackend : Types.ToFrontend -> Types.FrontendModel -> (Types.FrontendModel, Cmd Msg), subscriptions : Types.FrontendModel -> Sub Msg, onUrlRequest : UrlRequest -> Msg, onUrlChange : Url.Url -> Msg }
 app =
     Lamdera.frontend
         { init = init
@@ -152,7 +153,7 @@ app =
 
 
 init : Url.Url -> Nav.Key -> ( Types.FrontendModel, Cmd Msg )
-init url key =
+init _ key =
     ( { key = key
       , cueCannonModel = Client.initialModel
       }
@@ -162,6 +163,7 @@ init url key =
     )
 
 
+update : Msg -> Model -> (Model, Cmd msg)
 update msg model =
     let
         ( newModel, platformCmd ) =

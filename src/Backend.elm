@@ -3,7 +3,6 @@ module Backend exposing (..)
 import Casting exposing (CastingChoices)
 import Dict
 import Env
-import Html
 import Http
 import Json.Decode
 import Lamdera exposing (ClientId, SessionId)
@@ -37,6 +36,7 @@ type alias Msg =
     BackendMsg
 
 
+app : { init : (Model, Cmd Msg), update : Msg -> Model -> (Model, Cmd Msg), updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> (Model, Cmd Msg), subscriptions : Model -> Sub Msg }
 app =
     Lamdera.backend
         { init = init
@@ -68,7 +68,7 @@ init =
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd Msg )
-updateFromFrontend sessionId clientId msg model =
+updateFromFrontend sessionId _ msg model =
     case msg of
         -- App
         ClientInit ->
@@ -94,6 +94,7 @@ updateFromFrontend sessionId clientId msg model =
             advanceCueHelper model
 
 
+advanceCueHelper : Model -> (Model, Cmd BackendMsg)
 advanceCueHelper model =
     -- TODO Move FullLibrary to own Productions.elm module
     case model.library of
@@ -298,7 +299,7 @@ fetchLibraryHelper sessionId model =
                 }
     in
     case model.library of
-        FullLibrary lib ->
+        FullLibrary _ ->
             ( newModel, fetchRequest )
                 |> logging "New s3Url detected. Attempting to fetch plays..."
 
@@ -428,6 +429,7 @@ fetchedScriptHelper model name script =
 -- Getting scripts might fail, and we want to stop trying after a bit
 
 
+errorHelper : Model -> String -> Http.Error -> (Model, Cmd Msg)
 errorHelper model name e =
     let
         incrementError maybeCount =
@@ -460,6 +462,7 @@ errorHelper model name e =
         ( newModel, Cmd.none )
 
 
+errorToString : Http.Error -> String
 errorToString err =
     -- https://package.elm-lang.org/packages/elm/http/latest/Http#expectStringResponse
     -- BadUrl means you did not provide a valid URL.
@@ -484,6 +487,7 @@ errorToString err =
             "Elm.HTTP bad body error: " ++ s
 
 
+checkTimerHelper : { library : State, errorCount : Dict.Dict String Int, log : List String, staleTimer : Timer, s3UrlAtLastFetch : Maybe String } -> Time.Posix -> (Model, Cmd Msg)
 checkTimerHelper model time =
     case model.staleTimer of
         TimerSet timer ->
@@ -556,6 +560,7 @@ subscriptions model =
         ]
 
 
+checkStaleProductionTrigger : { a | staleTimer : Timer } -> Sub BackendMsg
 checkStaleProductionTrigger model =
     case model.staleTimer of
         TimerSet _ ->
@@ -565,9 +570,10 @@ checkStaleProductionTrigger model =
             Sub.none
 
 
+fetchScriptTrigger : { a | library : State } -> Sub BackendMsg
 fetchScriptTrigger model =
     case model.library of
-        Updating _ { added, notAdded, fetching } ->
+        Updating _ { notAdded, fetching } ->
             case List.head (Set.toList notAdded) of
                 Just name ->
                     if fetching then

@@ -4,9 +4,11 @@ module Env exposing (..)
 -- See https://dashboard.lamdera.app/docs/environment for more info.
 
 
+s3Url : String
 s3Url =
     "https://macbeezy.s3.us-east-2.amazonaws.com/"
 
 
+host : String
 host =
     "http://localhost:8000/"
