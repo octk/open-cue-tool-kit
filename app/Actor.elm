@@ -2,25 +2,15 @@ module Actor exposing (AcceptingDetails, CueingAction(..), CueingDetails, Model(
 
 import Casting exposing (Script)
 import Css
-import Css.Global
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes as Attr exposing (css)
 import Html.Styled.Events as Events exposing (onClick)
 import Interface exposing (appHeight, loadingPage)
 import List.Extra as List
-import Loading
-    exposing
-        ( LoaderType(..)
-        , defaultConfig
-        , render
-        )
-import QRCode
-import Svg.Attributes as SvgA
-import Svg.Styled as Svg exposing (path, svg)
-import Svg.Styled.Attributes as SvgAttr
+import Loading exposing ( LoaderType(..))
 import Tailwind.Breakpoints as Bp
 import Tailwind.Utilities as Tw exposing (..)
-import TestScript exposing (testScript, testScript2)
+import TestScript exposing (testScript2)
 
 
 type Model
@@ -84,7 +74,7 @@ view model =
 
 
 acceptingPage : AcceptingDetails -> Html Msg
-acceptingPage { script, director, joining, name } =
+acceptingPage { script, joining, name } =
     div
         [ css
             [ h_full ]
@@ -469,7 +459,7 @@ updateFromPlatform response model =
             , NoCmd
             )
 
-
+incrementLineNumberHelper : Model -> Html Msg
 incrementLineNumberHelper model =
     case model of
         Cueing details ->
@@ -492,7 +482,7 @@ acceptInvitationHelper model =
         _ ->
             ( model, NoCmd )
 
-
+interfaceTestCases : List Model
 interfaceTestCases =
     [ {- This example is a basic example of after someone clicks an invite link -}
       Accepting
