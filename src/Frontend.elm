@@ -1,12 +1,12 @@
 module Frontend exposing (..)
 
 import Actor
-import Browser exposing (UrlRequest(..))
+import Browser exposing (UrlRequest)
 import Browser.Navigation as Nav
 import Client exposing (Msg(..), PlatformCmd(..), PlatformResponse(..))
 import Director
 import Env
-import Html.Styled as Html exposing (toUnstyled)
+import Html.Styled exposing (toUnstyled)
 import Lamdera
 import Task
 import Types
@@ -139,7 +139,7 @@ onlyPlatformMessage msg =
             OnlyPlatformResponse NoResponse
 
 
-app : { init : Lamdera.Url -> Nav.Key -> (Types.FrontendModel, Cmd Msg), view : Types.FrontendModel -> Browser.Document Msg, update : Msg -> Types.FrontendModel -> (Types.FrontendModel, Cmd Msg), updateFromBackend : Types.ToFrontend -> Types.FrontendModel -> (Types.FrontendModel, Cmd Msg), subscriptions : Types.FrontendModel -> Sub Msg, onUrlRequest : UrlRequest -> Msg, onUrlChange : Url.Url -> Msg }
+app : { init : Lamdera.Url -> Nav.Key -> ( Types.FrontendModel, Cmd Msg ), view : Types.FrontendModel -> Browser.Document Msg, update : Msg -> Types.FrontendModel -> ( Types.FrontendModel, Cmd Msg ), updateFromBackend : Types.ToFrontend -> Types.FrontendModel -> ( Types.FrontendModel, Cmd Msg ), subscriptions : Types.FrontendModel -> Sub Msg, onUrlRequest : UrlRequest -> Msg, onUrlChange : Url.Url -> Msg }
 app =
     Lamdera.frontend
         { init = init
@@ -163,7 +163,7 @@ init _ key =
     )
 
 
-update : Msg -> Model -> (Model, Cmd msg)
+update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     let
         ( newModel, platformCmd ) =

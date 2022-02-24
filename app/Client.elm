@@ -10,7 +10,6 @@ module Client exposing
     )
 
 import Actor
-import Casting exposing (..)
 import Director
 import Html.Styled as Html exposing (..)
 import Interface exposing (appScaffolding, debuggingPage, genericPage, loadingPage)
@@ -62,8 +61,7 @@ type State
 
 
 type Msg
-    = NoOp
-    | ToggleMenu
+    = ToggleMenu
     | ToggleDebug
     | ActorMsg Actor.Msg
     | DirectorMsg Director.Msg
@@ -143,7 +141,7 @@ update msg model =
         ( ClickedResetProductions, _ ) ->
             ( model, ResetProductions )
 
-        ( _, _ ) ->
+        _ ->
             ( model, NoCmd )
 
 
@@ -187,7 +185,7 @@ updateFromPlatform response model =
             ( Spectating, NoCmd )
                 |> Tuple.mapFirst stateToModel
 
-        ( _, _ ) ->
+        _ ->
             ( model, NoCmd )
 
 
@@ -285,7 +283,7 @@ indexLogs logs =
 
 interfaceTestCases : List Model
 interfaceTestCases =
-    InitialLoading 
+    InitialLoading
         :: List.map Director Director.interfaceTestCases
         ++ List.map Actor Actor.interfaceTestCases
         |> List.map

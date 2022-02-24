@@ -1,13 +1,12 @@
-module Actor exposing (AcceptingDetails, CueingAction(..), CueingDetails, Model(..), Msg(..), PlatformCmd(..), PlatformResponse(..), acceptInvitationHelper, acceptingPage, cueingPage, incrementLineNumberHelper, initialize, interfaceTestCases, makeCueingAction, update, updateFromPlatform, view)
+module Actor exposing (AcceptingDetails, CueingAction(..), CueingDetails, Model(..), Msg(..), PlatformCmd(..), PlatformResponse(..), initialize, interfaceTestCases, update, updateFromPlatform, view)
 
 import Casting exposing (Script)
 import Css
-import Html.Styled as Html exposing (..)
+import Html.Styled exposing (..)
 import Html.Styled.Attributes as Attr exposing (css)
 import Html.Styled.Events as Events exposing (onClick)
 import Interface exposing (appHeight, loadingPage)
 import List.Extra as List
-import Loading exposing ( LoaderType(..))
 import Tailwind.Breakpoints as Bp
 import Tailwind.Utilities as Tw exposing (..)
 import TestScript exposing (testScript2)
@@ -459,7 +458,8 @@ updateFromPlatform response model =
             , NoCmd
             )
 
-incrementLineNumberHelper : Model -> (Model, PlatformCmd)
+
+incrementLineNumberHelper : Model -> ( Model, PlatformCmd )
 incrementLineNumberHelper model =
     case model of
         Cueing details ->
@@ -481,6 +481,7 @@ acceptInvitationHelper model =
 
         _ ->
             ( model, NoCmd )
+
 
 interfaceTestCases : List Model
 interfaceTestCases =

@@ -1,4 +1,4 @@
-module Director exposing (Actor, CastingDetails, ManualChoice(..), Model(..), Msg(..), Part, PlatformCmd(..), PlatformResponse(..), actorJoinedHelper, alreadyCastPartsAndActors, beginShowHelper, browsingPage, cancelModalHelper, castHelper, castingModal, castingPage, castingSwitch, considerCastingChoiceHelper, initialize, interfaceTestCases, mapCasting, pickScriptHelper, toggleAutocastHelper, update, updateFromPlatform, view, yetUncastActors, yetUncastParts)
+module Director exposing (Actor, CastingDetails, ManualChoice(..), Model(..), Msg(..), Part, PlatformCmd(..), PlatformResponse(..), initialize, interfaceTestCases, update, updateFromPlatform, view)
 
 import Casting exposing (..)
 import Css
@@ -6,7 +6,6 @@ import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes as Attr exposing (css)
 import Html.Styled.Events as Events exposing (onClick)
 import Interface exposing (appHeight, emptyTemplate, genericPage, loadingPage)
-import Loading exposing ( LoaderType(..))
 import QRCode
 import Svg.Attributes as SvgA
 import Tailwind.Breakpoints as Bp
@@ -64,6 +63,7 @@ view model =
 
         ShowIsRunning ->
             genericPage "Show is running" (Html.text "")
+
 
 browsingPage : List { title : String, lines : List { speaker : String, line : String, title : String, part : String } } -> Html Msg
 browsingPage scripts =
@@ -140,35 +140,6 @@ castingPage { casting, manualCasting, autocast, host } =
                                 Nothing ->
                                     []
                             )
-
-                        -- , div []
-                        --     [ button
-                        --         [ Attr.type_ "submit"
-                        --         , css
-                        --             [ relative
-                        --             , w_full
-                        --             , flex
-                        --             , justify_center
-                        --             , py_2
-                        --             , px_4
-                        --             , border
-                        --             , border_transparent
-                        --             , text_sm
-                        --             , font_medium
-                        --             , rounded_md
-                        --             , text_white
-                        --             , bg_indigo_600
-                        --             , Css.focus
-                        --                 [ outline_none
-                        --                 , ring_2
-                        --                 , ring_offset_2
-                        --                 , ring_indigo_500
-                        --                 ]
-                        --             , Css.hover [ bg_indigo_700 ]
-                        --             ]
-                        --         ]
-                        --         [ text "Copy invitation link" ]
-                        --     ]
                         ]
                     ]
                 ]
@@ -528,8 +499,7 @@ alreadyCastPartsAndActors autocast casting =
         |> List.map
             (\( part, actor ) ->
                 li
-                    ( css [ bg_white ]
-                     
+                    (css [ bg_white ]
                         :: (if autocast then
                                 []
 
@@ -588,7 +558,7 @@ yetUncastActors autocast casting =
         |> List.map
             (\actor ->
                 li
-                    ( css [ bg_white ]
+                    (css [ bg_white ]
                         :: (if autocast then
                                 []
 
@@ -655,8 +625,7 @@ yetUncastParts autocast casting =
         |> List.map
             (\part ->
                 li
-                    ( css [ bg_white ]
-                     
+                    (css [ bg_white ]
                         :: (if autocast then
                                 []
 

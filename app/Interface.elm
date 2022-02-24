@@ -8,7 +8,6 @@ module Interface exposing
     , loadingPage
     )
 
-import Casting exposing (..)
 import Css
 import Css.Global
 import Html.Styled as Html exposing (..)
@@ -19,7 +18,7 @@ import Loading
         ( LoaderType(..)
         , defaultConfig
         )
-import Svg.Styled as Svg exposing (path, svg)
+import Svg.Styled exposing (path, svg)
 import Svg.Styled.Attributes as SvgAttr
 import Tailwind.Breakpoints as Bp
 import Tailwind.Utilities as Tw exposing (..)

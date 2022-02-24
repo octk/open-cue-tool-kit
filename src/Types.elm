@@ -2,7 +2,7 @@ module Types exposing (..)
 
 import Browser.Navigation exposing (Key)
 import Casting exposing (CastingChoices)
-import Client exposing (Model, Msg(..))
+import Client exposing (Model, Msg)
 import Dict exposing (Dict)
 import Http
 import Lamdera exposing (ClientId)
