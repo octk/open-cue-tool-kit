@@ -148,13 +148,6 @@ update msg model =
         ( ClickedResetScripts, _ ) ->
             ( model, ResetScripts )
 
-        ( FocusResult result, _ ) ->
-            let
-                _ =
-                    Debug.log "FocusResult" result
-            in
-            ( model, NoCmd )
-
         _ ->
             ( model, NoCmd )
 
