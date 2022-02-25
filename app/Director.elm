@@ -1,4 +1,18 @@
-module Director exposing (Actor, CastingDetails, ManualChoice(..), Model(..), Msg(..), Part, PlatformCmd(..), PlatformResponse(..), initialize, interfaceTestCases, update, updateFromPlatform, view)
+module Director exposing
+    ( Actor
+    , CastingDetails
+    , ManualChoice(..)
+    , Model(..)
+    , Msg(..)
+    , Part
+    , PlatformCmd(..)
+    , PlatformResponse(..)
+    , initialize
+    , interfaceTestCases
+    , update
+    , updateFromPlatform
+    , view
+    )
 
 import Casting exposing (..)
 import Css
@@ -7,6 +21,7 @@ import Html.Styled.Attributes as Attr exposing (css)
 import Html.Styled.Events as Events exposing (onClick)
 import Interface exposing (appHeight, emptyTemplate, genericPage, loadingPage)
 import QRCode
+import Set
 import Svg.Attributes as SvgA
 import Tailwind.Breakpoints as Bp
 import Tailwind.Utilities as Tw exposing (..)
@@ -17,12 +32,13 @@ type Model
     = Browsing (List Script) String
     | Casting CastingDetails
     | WaitingForScripts
-    | ShowIsRunning
+    | ShowIsRunning Script
 
 
 type Msg
     = PickScript Script
-    | ToggleAutocast
+    | ToggleCastRandomly
+    | ToggleCastSelf
     | CancelModal
     | ConsiderCastingChoice ManualChoice
     | CastActorAsPart Actor Part
@@ -44,7 +60,8 @@ type alias CastingDetails =
     { casting : CastingChoices
     , script : Script
     , manualCasting : Maybe ManualChoice
-    , autocast : Bool
+    , castRandomly : Bool
+    , castSelf : Bool
     , host : Maybe String
     }
 
@@ -61,7 +78,7 @@ view model =
         WaitingForScripts ->
             loadingPage
 
-        ShowIsRunning ->
+        ShowIsRunning _ ->
             genericPage "Show is running" (Html.text "")
 
 
@@ -91,8 +108,8 @@ browsingPage scripts =
         ]
 
 
-castingPage : { a | casting : CastingChoices, manualCasting : Maybe ManualChoice, autocast : Bool, host : Maybe String } -> Html Msg
-castingPage { casting, manualCasting, autocast, host } =
+castingPage : CastingDetails -> Html Msg
+castingPage { casting, manualCasting, castRandomly, castSelf, host } =
     let
         actorsPresent =
             not (List.isEmpty (allActors casting))
@@ -147,11 +164,12 @@ castingPage { casting, manualCasting, autocast, host } =
                 [ Attr.attribute "role" "list"
                 , css [ divide_y, divide_gray_200, overflow_scroll ]
                 ]
-                (castingSwitch autocast
+                (castRandomlySwitch castRandomly
+                    ++ castSelfSwitch castSelf
                     ++ (if actorsPresent then
-                            yetUncastActors autocast casting
-                                ++ yetUncastParts autocast casting
-                                ++ alreadyCastPartsAndActors autocast casting
+                            yetUncastActors castRandomly casting
+                                ++ yetUncastParts castRandomly casting
+                                ++ alreadyCastPartsAndActors castRandomly casting
 
                         else
                             [ li
@@ -484,7 +502,7 @@ castingModal currentCasting newChoice =
 
 
 alreadyCastPartsAndActors : Bool -> CastingChoices -> List (Html Msg)
-alreadyCastPartsAndActors autocast casting =
+alreadyCastPartsAndActors castRandomly casting =
     castParts casting
         |> List.map
             (\part ->
@@ -500,7 +518,7 @@ alreadyCastPartsAndActors autocast casting =
             (\( part, actor ) ->
                 li
                     (css [ bg_white ]
-                        :: (if autocast then
+                        :: (if castRandomly then
                                 []
 
                             else
@@ -553,13 +571,13 @@ alreadyCastPartsAndActors autocast casting =
 
 
 yetUncastActors : Bool -> CastingChoices -> List (Html Msg)
-yetUncastActors autocast casting =
+yetUncastActors castRandomly casting =
     uncastActors casting
         |> List.map
             (\actor ->
                 li
                     (css [ bg_white ]
-                        :: (if autocast then
+                        :: (if castRandomly then
                                 []
 
                             else
@@ -620,13 +638,13 @@ yetUncastActors autocast casting =
 
 
 yetUncastParts : Bool -> CastingChoices -> List (Html Msg)
-yetUncastParts autocast casting =
+yetUncastParts castRandomly casting =
     uncastParts casting
         |> List.map
             (\part ->
                 li
                     (css [ bg_white ]
-                        :: (if autocast then
+                        :: (if castRandomly then
                                 []
 
                             else
@@ -686,8 +704,8 @@ yetUncastParts autocast casting =
             )
 
 
-castingSwitch : Bool -> List (Html Msg)
-castingSwitch autocast =
+castRandomlySwitch : Bool -> List (Html Msg)
+castRandomlySwitch castRandomly =
     [ li
         [ css
             [ p_4
@@ -712,7 +730,7 @@ castingSwitch autocast =
                 ]
                 [ text
                     ("Cast automatically: "
-                        ++ (if autocast then
+                        ++ (if castRandomly then
                                 "on"
 
                             else
@@ -726,7 +744,7 @@ castingSwitch autocast =
                     , text_gray_500
                     ]
                 ]
-                [ if autocast then
+                [ if castRandomly then
                     text "Actors are randomly assigned parts balanced by their number of lines"
 
                   else
@@ -735,7 +753,7 @@ castingSwitch autocast =
             ]
         , button
             [ Attr.type_ "button"
-            , onClick ToggleAutocast
+            , onClick ToggleCastRandomly
             , css
                 [ ml_4
                 , relative
@@ -757,11 +775,11 @@ castingSwitch autocast =
                     ]
 
                 -- Order matters for elm-tailwind, so dynamic last
-                , if autocast then
-                    bg_gray_200
+                , if castRandomly then
+                    bg_gray_500
 
                   else
-                    bg_gray_500
+                    bg_gray_200
                 ]
             , Attr.attribute "role" "switch"
             , Attr.attribute "aria-checked" "true"
@@ -784,11 +802,122 @@ castingSwitch autocast =
                     , duration_200
 
                     -- Order matters for elm-tailwind, so dynamic last
-                    , if autocast then
-                        translate_x_0
+                    , if castRandomly then
+                        translate_x_5
 
                       else
+                        translate_x_0
+                    ]
+                ]
+                []
+            ]
+        ]
+    ]
+
+
+castSelfSwitch : Bool -> List (Html Msg)
+castSelfSwitch castSelf =
+    [ li
+        [ css
+            [ p_4
+            , flex
+            , items_center
+            , justify_between
+            , bg_white
+            ]
+        ]
+        [ div
+            [ css
+                [ flex
+                , flex_col
+                ]
+            ]
+            [ p
+                [ css
+                    [ text_sm
+                    , font_medium
+                    , text_gray_900
+                    ]
+                ]
+                [ text
+                    ("Cast self: "
+                        ++ (if castSelf then
+                                "on"
+
+                            else
+                                "off"
+                           )
+                    )
+                ]
+            , p
+                [ css
+                    [ text_sm
+                    , text_gray_500
+                    ]
+                ]
+                [ if castSelf then
+                    text "You are cast alongside the actors"
+
+                  else
+                    text "You are not cast alongside the actors"
+                ]
+            ]
+        , button
+            [ Attr.type_ "button"
+            , onClick ToggleCastSelf
+            , css
+                [ ml_4
+                , relative
+                , inline_flex
+                , flex_shrink_0
+                , h_6
+                , w_11
+                , border_2
+                , border_transparent
+                , rounded_full
+                , cursor_pointer
+                , transition_colors
+                , ease_in_out
+                , duration_200
+                , Css.focus
+                    [ outline_none
+                    , ring_2
+                    , ring_offset_2
+                    ]
+
+                -- Order matters for elm-tailwind, so dynamic last
+                , if castSelf then
+                    bg_gray_500
+
+                  else
+                    bg_gray_200
+                ]
+            , Attr.attribute "role" "switch"
+            , Attr.attribute "aria-checked" "true"
+            , Attr.attribute "aria-labelledby" "privacy-option-1-label"
+            , Attr.attribute "aria-describedby" "privacy-option-1-description"
+            ]
+            [ span
+                [ Attr.attribute "aria-hidden" "true"
+                , css
+                    [ inline_block
+                    , h_5
+                    , w_5
+                    , rounded_full
+                    , bg_white
+                    , shadow
+                    , transform
+                    , ring_0
+                    , transition
+                    , ease_in_out
+                    , duration_200
+
+                    -- Order matters for elm-tailwind, so dynamic last
+                    , if castSelf then
                         translate_x_5
+
+                      else
+                        translate_x_0
                     ]
                 ]
                 []
@@ -831,8 +960,11 @@ update msg model =
         PickScript { title, lines } ->
             pickScriptHelper model title lines
 
-        ToggleAutocast ->
-            ( toggleAutocastHelper model, NoCmd )
+        ToggleCastRandomly ->
+            ( toggleCastRandomlyHelper model, NoCmd )
+
+        ToggleCastSelf ->
+            ( toggleCastSelfHelper model, NoCmd )
 
         ConsiderCastingChoice choice ->
             ( mapCasting (considerCastingChoiceHelper choice) model, NoCmd )
@@ -862,8 +994,8 @@ updateFromPlatform response model =
 beginShowHelper : Model -> ( Model, PlatformCmd )
 beginShowHelper model =
     case model of
-        Casting { casting } ->
-            ( ShowIsRunning, ShareProduction casting )
+        Casting { casting, script } ->
+            ( ShowIsRunning script, ShareProduction casting )
 
         _ ->
             ( model, NoCmd )
@@ -892,7 +1024,8 @@ pickScriptHelper model title lines =
         , manualCasting = Nothing
         , script = script
         , host = hostUrl
-        , autocast = True
+        , castRandomly = True
+        , castSelf = False
         }
     , MakeInvitation script
     )
@@ -920,17 +1053,40 @@ castHelper actor part model =
     ( mapCasting cast model, NoCmd )
 
 
-toggleAutocastHelper : Model -> Model
-toggleAutocastHelper model =
+toggleCastRandomlyHelper : Model -> Model
+toggleCastRandomlyHelper model =
     let
-        recast ({ casting, script, autocast } as details) =
+        recast ({ casting, script, castRandomly } as details) =
             { details
                 | casting =
-                    if autocast then
+                    if castRandomly then
                         castByLineFrequency script.lines (allActors casting)
 
                     else
                         casting
+            }
+    in
+    mapCasting recast model
+
+
+toggleCastSelfHelper : Model -> Model
+toggleCastSelfHelper model =
+    let
+        recast ({ casting, script, castSelf } as details) =
+            { details
+                | castSelf = not castSelf
+                , casting =
+                    if castSelf then
+                        allActors casting
+                            |> Set.fromList
+                            |> Set.remove "Director (you)"
+                            |> Set.toList
+                            |> castByLineFrequency script.lines
+
+                    else
+                        "Director (you)"
+                            :: allActors casting
+                            |> castByLineFrequency script.lines
             }
     in
     mapCasting recast model
@@ -952,7 +1108,7 @@ actorJoinedHelper name _ details =
     in
     { details
         | casting =
-            if details.autocast then
+            if details.castRandomly then
                 castByLineFrequency details.script.lines (newActor :: currentActors)
 
             else
@@ -972,7 +1128,8 @@ interfaceTestCases =
         , script = Script "The Office" []
         , manualCasting = Just (PartFor "Dwight")
         , host = Nothing
-        , autocast = False
+        , castRandomly = False
+        , castSelf = False
         }
     , Casting
         -- This tests the casting spacing for many characters
@@ -980,7 +1137,8 @@ interfaceTestCases =
         , script = { title = "", lines = testScript }
         , manualCasting = Nothing
         , host = Nothing
-        , autocast = False
+        , castRandomly = False
+        , castSelf = False
         }
     , Browsing
         --This tests selecting from a long list of scripts

@@ -165,6 +165,20 @@ updateFromPlatform response model =
                 |> Tuple.mapFirst stateToModel
                 |> Tuple.mapSecond DirectorPC
 
+        -- Transition
+        ( ActorPR (Actor.StartCueing casting), Director (Director.ShowIsRunning script) ) ->
+            Actor.updateFromPlatform (Actor.StartCueing casting)
+                (Actor.Cueing
+                    { script = script
+                    , casting = casting
+                    , lineNumber = 0
+                    , name = "Director (you)"
+                    }
+                )
+                |> Tuple.mapFirst Actor
+                |> Tuple.mapFirst stateToModel
+                |> Tuple.mapSecond ActorPC
+
         -- Init
         ( ActorPR subResponse, _ ) ->
             Actor.initialize subResponse

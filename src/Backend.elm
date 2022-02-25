@@ -1,6 +1,6 @@
 module Backend exposing (..)
 
-import Casting exposing (CastingChoices)
+import Casting exposing (CastingChoices, whichPartsAreActor)
 import Dict
 import Env
 import Http
@@ -36,7 +36,12 @@ type alias Msg =
     BackendMsg
 
 
-app : { init : (Model, Cmd Msg), update : Msg -> Model -> (Model, Cmd Msg), updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> (Model, Cmd Msg), subscriptions : Model -> Sub Msg }
+app :
+    { init : ( Model, Cmd Msg )
+    , update : Msg -> Model -> ( Model, Cmd Msg )
+    , updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd Msg )
+    , subscriptions : Model -> Sub Msg
+    }
 app =
     Lamdera.backend
         { init = init
@@ -90,11 +95,12 @@ updateFromFrontend sessionId _ msg model =
         ShareProduction casting ->
             shareCasting model casting
 
+        -- Actor
         AdvanceCue ->
             advanceCueHelper model
 
 
-advanceCueHelper : Model -> (Model, Cmd BackendMsg)
+advanceCueHelper : Model -> ( Model, Cmd BackendMsg )
 advanceCueHelper model =
     -- TODO Move FullLibrary to own Productions.elm module
     case model.library of
@@ -108,6 +114,11 @@ advanceCueHelper model =
                                 |> List.map (\f -> f message)
                                 |> Cmd.batch
 
+                        directorInCast =
+                            whichPartsAreActor "Director (you)" production.casting
+                                |> List.isEmpty
+                                |> not
+
                         setLineNumber _ p =
                             -- TODO Advance one production instead of all of them
                             { p | status = p.status + 1 }
@@ -116,6 +127,11 @@ advanceCueHelper model =
                     , Cmd.batch
                         [ tellActors IncrementLineNumber
                         , Task.perform GotSetTimerMoment Time.now
+                        , if directorInCast then
+                            Lamdera.sendToFrontend production.directorId IncrementLineNumber
+
+                          else
+                            Cmd.none
                         ]
                     )
 
@@ -346,6 +362,11 @@ shareCasting model casting =
                                 |> List.map (\f -> f message)
                                 |> Cmd.batch
 
+                        directorInCast =
+                            whichPartsAreActor "Director (you)" casting
+                                |> List.isEmpty
+                                |> not
+
                         setCast _ p =
                             { p | casting = casting }
                     in
@@ -353,6 +374,11 @@ shareCasting model casting =
                     , Cmd.batch
                         [ tellActors (StartCueing casting)
                         , Task.perform GotSetTimerMoment Time.now
+                        , if directorInCast then
+                            Lamdera.sendToFrontend production.directorId (StartCueing casting)
+
+                          else
+                            Cmd.none
                         ]
                     )
 
@@ -429,7 +455,7 @@ fetchedScriptHelper model name script =
 -- Getting scripts might fail, and we want to stop trying after a bit
 
 
-errorHelper : Model -> String -> Http.Error -> (Model, Cmd Msg)
+errorHelper : Model -> String -> Http.Error -> ( Model, Cmd Msg )
 errorHelper model name e =
     let
         incrementError maybeCount =
@@ -487,7 +513,7 @@ errorToString err =
             "Elm.HTTP bad body error: " ++ s
 
 
-checkTimerHelper : { library : State, errorCount : Dict.Dict String Int, log : List String, staleTimer : Timer, s3UrlAtLastFetch : Maybe String } -> Time.Posix -> (Model, Cmd Msg)
+checkTimerHelper : { library : State, errorCount : Dict.Dict String Int, log : List String, staleTimer : Timer, s3UrlAtLastFetch : Maybe String } -> Time.Posix -> ( Model, Cmd Msg )
 checkTimerHelper model time =
     case model.staleTimer of
         TimerSet timer ->
