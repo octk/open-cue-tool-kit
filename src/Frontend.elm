@@ -59,6 +59,9 @@ platformCmdTransform platformCmd =
                     Lamdera.sendToBackend (Types.JoinProduction name id)
 
                 Actor.FocusNameInput ->
+                    -- TODO Remove this?
+                    -- I wanted it to raise the keyboard on mobile, but might need a port to some js for that
+                    -- https://stackoverflow.com/questions/54424729/ios-show-keyboard-on-input-focus
                     Task.attempt FocusResult (Dom.focus "actorNameInput")
 
                 Actor.NoCmd ->

@@ -6,7 +6,7 @@ module Env exposing (..)
 
 s3Url : String
 s3Url =
-    "https://macbeezy.s3.us-east-2.amazonaws.com/"
+    "https://canon-favorites.s3.us-east-2.amazonaws.com/"
 
 
 host : String
