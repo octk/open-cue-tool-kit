@@ -10,6 +10,7 @@ module Client exposing
     )
 
 import Actor
+import Browser.Dom as Dom
 import Director
 import Html.Styled as Html exposing (..)
 import Interface exposing (appScaffolding, debuggingPage, genericPage, loadingPage)
@@ -68,6 +69,7 @@ type Msg
     | AdvanceInterfaceTestCase
     | OnlyPlatformResponse PlatformResponse
     | ClickedResetProductions
+    | FocusResult (Result Dom.Error ())
 
 
 type PlatformResponse
@@ -140,6 +142,13 @@ update msg model =
 
         ( ClickedResetProductions, _ ) ->
             ( model, ResetProductions )
+
+        ( FocusResult result, _ ) ->
+            let
+                _ =
+                    Debug.log "FocusResult" result
+            in
+            ( model, NoCmd )
 
         _ ->
             ( model, NoCmd )

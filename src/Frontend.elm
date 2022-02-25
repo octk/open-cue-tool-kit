@@ -2,6 +2,7 @@ module Frontend exposing (..)
 
 import Actor
 import Browser exposing (UrlRequest)
+import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Client exposing (Msg(..), PlatformCmd(..), PlatformResponse(..))
 import Director
@@ -23,7 +24,7 @@ import Url
 -- mapped in these functions
 
 
-platformCmdTransform : PlatformCmd -> Cmd msg
+platformCmdTransform : PlatformCmd -> Cmd Msg
 platformCmdTransform platformCmd =
     case platformCmd of
         Client.NoCmd ->
@@ -53,6 +54,9 @@ platformCmdTransform platformCmd =
 
                 Actor.JoinProduction name id ->
                     Lamdera.sendToBackend (Types.JoinProduction name id)
+
+                Actor.FocusNameInput ->
+                    Task.attempt FocusResult (Dom.focus "actorNameInput")
 
                 Actor.NoCmd ->
                     Cmd.none
@@ -163,7 +167,7 @@ init _ key =
     )
 
 
-update : Msg -> Model -> ( Model, Cmd msg )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         ( newModel, platformCmd ) =

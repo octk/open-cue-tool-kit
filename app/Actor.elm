@@ -9,6 +9,7 @@ import Interface exposing (appHeight, loadingPage)
 import List.Extra as List
 import Tailwind.Breakpoints as Bp
 import Tailwind.Utilities as Tw exposing (..)
+import Task
 import TestScript exposing (testScript2)
 
 
@@ -56,6 +57,7 @@ type PlatformResponse
 type PlatformCmd
     = JoinProduction String String
     | AdvanceCue
+    | FocusNameInput
     | NoCmd
 
 
@@ -146,6 +148,7 @@ acceptingPage { script, joining, name } =
                                 ]
                             ]
                         , Attr.placeholder "Bill Shakespeare"
+                        , Attr.id "actorNameInput"
                         ]
                         []
                     ]
@@ -430,7 +433,7 @@ updateFromPlatform response model =
                 , joining = False
                 , name = ""
                 }
-            , NoCmd
+            , FocusNameInput
             )
 
         StartCueing casting ->
