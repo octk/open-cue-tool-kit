@@ -69,6 +69,7 @@ type Msg
     | AdvanceInterfaceTestCase
     | OnlyPlatformResponse PlatformResponse
     | ClickedResetProductions
+    | ClickedResetScripts
     | FocusResult (Result Dom.Error ())
 
 
@@ -84,6 +85,7 @@ type PlatformCmd
     = NoCmd
     | ClientInit
     | ResetProductions
+    | ResetScripts
     | ActorPC Actor.PlatformCmd
     | DirectorPC Director.PlatformCmd
 
@@ -142,6 +144,9 @@ update msg model =
 
         ( ClickedResetProductions, _ ) ->
             ( model, ResetProductions )
+
+        ( ClickedResetScripts, _ ) ->
+            ( model, ResetScripts )
 
         ( FocusResult result, _ ) ->
             let
@@ -218,6 +223,7 @@ type alias ModuleInjections msg =
     , toggleMsg : msg
     , resetProductionsMsg : msg
     , toggleDebugMsg : msg
+    , resetScriptsMsg : msg
     }
 
 
@@ -239,6 +245,7 @@ viewHelper testingMsg model =
             , toggleMsg = ToggleMenu
             , resetProductionsMsg = ClickedResetProductions
             , toggleDebugMsg = ToggleDebug
+            , resetScriptsMsg = ClickedResetScripts
             }
     in
     if model.viewLogs then

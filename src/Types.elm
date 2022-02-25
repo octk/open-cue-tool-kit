@@ -74,6 +74,7 @@ type ToBackend
     | ShareProduction CastingChoices
     | AdvanceCue
     | ResetProductions
+    | ResetScripts
 
 
 type BackendMsg

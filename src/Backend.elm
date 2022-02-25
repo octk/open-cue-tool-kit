@@ -88,6 +88,10 @@ updateFromFrontend sessionId _ msg model =
             )
                 |> logging "Productions reset by client"
 
+        ResetScripts ->
+            fetchLibraryHelper sessionId { model | library = EmptyLibrary }
+                |> logging "Scripts reset by client"
+
         -- Director
         MakeInvitation script ->
             shareScript sessionId model script
