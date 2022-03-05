@@ -1,5 +1,5 @@
 # Making changes
-<a href="https://gitpod.io/#https://github.com/cuecannon/cuecannon" target="_blank">
+<a href="https://gitpod.io/#https://github.com/octk/open-cue-tool-kit" target="_blank">
   <img src="https://gitpod.io/button/open-in-gitpod.svg" alt="Open in Gitpod"> 
   </img>
 </a>
