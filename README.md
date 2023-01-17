@@ -2,7 +2,9 @@
 ## Deployments
 
 [Shakespeare](https://demo-shakes.lamdera.app/)
+
 [Star Trek (The Neutral Zone)](https://star-trek-pgtc.lamdera.app/)
+
 [Monty Python](https://monty-python-park.lamdera.app/)
 
 ## Making changes
