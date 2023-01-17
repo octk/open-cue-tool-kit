@@ -1,7 +1,10 @@
 # Open Cue Tool Kit App
 ## Deployments
 
-(Shakespeare)[https://demo-shakes.lamdera.app/]
+[Shakespeare](https://demo-shakes.lamdera.app/)
+[Star Trek (The Neutral Zone)](https://star-trek-pgtc.lamdera.app/)
+[Monty Python](https://monty-python-park.lamdera.app/)
+
 ## Making changes
 <a href="https://gitpod.io/#https://github.com/octk/open-cue-tool-kit" target="_blank">
   <img src="https://gitpod.io/button/open-in-gitpod.svg" alt="Open in Gitpod"> 
