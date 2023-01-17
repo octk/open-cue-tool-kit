@@ -1,4 +1,7 @@
 # Open Cue Tool Kit App
+## Deployments
+
+(Shakespeare)[https://demo-shakes.lamdera.app/]
 ## Making changes
 <a href="https://gitpod.io/#https://github.com/octk/open-cue-tool-kit" target="_blank">
   <img src="https://gitpod.io/button/open-in-gitpod.svg" alt="Open in Gitpod"> 
